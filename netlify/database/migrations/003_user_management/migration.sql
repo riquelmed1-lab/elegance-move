@@ -1,0 +1,8 @@
+ALTER TABLE app_users
+  ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE;
+
+ALTER TABLE app_users
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE INDEX IF NOT EXISTS app_users_active_idx ON app_users(active);
+CREATE INDEX IF NOT EXISTS app_users_role_idx ON app_users(role);
