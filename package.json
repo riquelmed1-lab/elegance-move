@@ -7,6 +7,6 @@
     "@netlify/functions": "latest"
   },
   "scripts": {
-    "build": "node build.mjs && node patch-entry-delete.mjs && node inject-users-ui.mjs"
+    "build": "node build.mjs && node patch-entry-delete.mjs && node patch-dashboard-entry-sync.mjs && node inject-users-ui.mjs"
   }
 }
