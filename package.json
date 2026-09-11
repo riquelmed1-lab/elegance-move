@@ -7,6 +7,6 @@
     "@netlify/functions": "latest"
   },
   "scripts": {
-    "build": "node -e \"console.log('Elegance Move static build ready')\""
+    "build": "node build.mjs"
   }
 }
