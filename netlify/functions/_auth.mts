@@ -2,6 +2,7 @@ import { getDatabase } from "@netlify/database";
 import { createHash } from "node:crypto";
 
 export const SESSION_COOKIE = "em_session";
+export type UserRole = "admin" | "manager" | "seller";
 
 export function parseCookies(req: Request) {
   const raw = req.headers.get("cookie") || "";
@@ -29,17 +30,28 @@ export async function getSessionUser(req: Request) {
   const db = getDatabase();
   const tokenHash = hashToken(token);
   const rows = await db.sql`
-    SELECT u.id, u.email, u.full_name, u.role
+    SELECT u.id, u.email, u.full_name, u.role, u.active
     FROM auth_sessions s
     JOIN app_users u ON u.id = s.user_id
     WHERE s.token_hash = ${tokenHash}
       AND s.expires_at > NOW()
+      AND u.active = TRUE
     LIMIT 1
   `;
   const user: any = rows[0];
-  return user ? { id: user.id, email: user.email, name: user.full_name, role: user.role } : null;
+  return user ? {
+    id: user.id,
+    email: user.email,
+    name: user.full_name,
+    role: user.role as UserRole,
+    active: Boolean(user.active),
+  } : null;
 }
 
 export function unauthorized() {
   return Response.json({ error: "Unauthorized" }, { status: 401, headers: { "Cache-Control": "no-store" } });
+}
+
+export function forbidden() {
+  return Response.json({ error: "Forbidden" }, { status: 403, headers: { "Cache-Control": "no-store" } });
 }
