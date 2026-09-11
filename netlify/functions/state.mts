@@ -1,19 +1,10 @@
 import { getDatabase } from "@netlify/database";
 import type { Config, Context } from "@netlify/functions";
+import { getSessionUser, unauthorized } from "./_auth.mts";
 
 const asNumber = (value: unknown) => Number(value ?? 0) || 0;
 const dateOrNull = (value: unknown) => value ? String(value) : null;
 const text = (value: unknown) => value == null ? "" : String(value);
-
-const emptyState = () => ({
-  version: 10,
-  clients: [],
-  products: [],
-  sales: [],
-  expenses: [],
-  entries: [],
-  quotes: [],
-});
 
 async function readState() {
   const db = getDatabase();
@@ -127,6 +118,8 @@ async function replaceState(state: any, expectedRevision: number | null) {
 
 export default async (req: Request, _context: Context) => {
   try {
+    const user = await getSessionUser(req);
+    if (!user) return unauthorized();
     if (req.method === "GET") {
       return Response.json(await readState(), { headers: { "Cache-Control": "no-store" } });
     }
