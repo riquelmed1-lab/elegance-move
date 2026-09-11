@@ -10,7 +10,6 @@ const replaceIfPresent = (from, to) => {
   if (html.includes(from)) html = html.replace(from, to);
 };
 
-// Storage/schema upgrade: safe to run repeatedly.
 replaceIfPresent("const KEY='em-store-db-v9', SESSION='em-store-session-v1';", "const KEY='em-cloud-cache-v1', SESSION='em-store-session-v1';");
 replaceIfPresent('const seed={version:9,clients:[],products:[],sales:[],expenses:[],entries:[],quotes:[]};', 'const seed={version:10,clients:[],products:[],sales:[],expenses:[],entries:[],quotes:[]};');
 html = html.replaceAll('x.version=9;', 'x.version=10;');
@@ -40,7 +39,6 @@ html = html.replace('>Pronto para nuvem<', '>Dados na nuvem<');
 html = html.replace('>Aguardando integração<', '>Sincronização ativa<');
 replaceIfPresent("try{if(SS.getItem(SESSION)==='demo')showApp()}catch(e){};", "try{SS.removeItem(SESSION)}catch(e){};");
 
-// Auth shell: also idempotent.
 if (!html.includes('class="auth-pending"') && html.includes('<body>')) {
   html = html.replace('<body>', '<body class="auth-pending">');
 }
@@ -48,7 +46,9 @@ if (!html.includes('body.auth-pending #app')) {
   html = html.replace('</head>', '<style>body.auth-pending #app{display:none!important}body.auth-pending #login{display:grid!important}</style></head>');
 }
 if (!html.includes('src="/auth.js"')) {
-  html = html.replace('</body>', '<script src="/auth.js"></script></body>');
+  const bodyClose = html.lastIndexOf('</body>');
+  if (bodyClose < 0) throw new Error('Fechamento </body> não encontrado no frontend base');
+  html = html.slice(0, bodyClose) + '<script src="/auth.js"></script>' + html.slice(bodyClose);
 }
 
 await mkdir('public', { recursive: true });
