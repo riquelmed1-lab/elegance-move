@@ -3,120 +3,131 @@
   const login = document.getElementById('login');
   const app = document.getElementById('app');
   const card = $('.login-card');
+  let currentUser = null;
+  let roleStyle = null;
+  let uiObserver = null;
+
+  const ROLE_LABEL = { admin:'Administrador', manager:'Gerente', seller:'Vendedor' };
+  const ROLE_DESC = {
+    admin:'Acesso completo, usuários, financeiro e configurações.',
+    manager:'Operação completa da loja, sem gestão de usuários e configurações críticas.',
+    seller:'Clientes, orçamentos e vendas. Custos, lucro, entradas e financeiro administrativo ficam ocultos.'
+  };
+  const ROLE_PAGES = {
+    admin: new Set(['dashboard','clientes','vendas','orcamentos','receber','estoque','entradas','caixa','sistema']),
+    manager: new Set(['dashboard','clientes','vendas','orcamentos','receber','estoque','entradas','caixa']),
+    seller: new Set(['clientes','vendas','orcamentos'])
+  };
 
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+  const roleLabel = (role) => ROLE_LABEL[role] || 'Usuário';
+  const dateTime = (value) => { if (!value) return 'Nunca'; try { return new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date(value)); } catch { return String(value); } };
 
-  async function api(body) {
+  async function authApi(body) {
     const options = body ? { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) } : { cache:'no-store' };
     const response = await fetch('/api/auth', options);
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw Object.assign(new Error(data.error || 'Falha de autenticação'), { status: response.status });
+    if (!response.ok) throw Object.assign(new Error(data.error || 'Falha de autenticação'), { status: response.status, code:data.error });
     return data;
   }
 
-  function message(text, error=false) {
-    let el = document.getElementById('authMessage');
-    if (!el) return;
-    el.textContent = text || '';
-    el.style.color = error ? '#a9584e' : '#5f8a67';
+  async function usersApi(body) {
+    const options = body ? { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) } : { cache:'no-store' };
+    const response = await fetch('/api/users', options);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw Object.assign(new Error(data.error || 'Falha na gestão de usuários'), { status: response.status, code:data.error });
+    return data;
   }
 
-  function baseHeader(kicker, title, desc) {
-    return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <div class="brandmark"><div style="font-weight:800;color:#8b6257;font-size:13px">EM</div></div>
-      <div><div class="eyebrow">${kicker}</div><div style="font-size:12px;font-weight:800;color:var(--dark2);margin-top:3px">Elegance Move</div></div>
-    </div>
-    <h2>${title}</h2><p class="muted" style="line-height:1.65">${desc}</p>`;
-  }
+  function message(text, error=false) { const el = document.getElementById('authMessage'); if (!el) return; el.textContent = text || ''; el.style.color = error ? '#a9584e' : '#5f8a67'; }
+
+  function baseHeader(kicker, title, desc) { return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="brandmark"><div style="font-weight:800;color:#8b6257;font-size:13px">EM</div></div><div><div class="eyebrow">${kicker}</div><div style="font-size:12px;font-weight:800;color:var(--dark2);margin-top:3px">Elegance Move</div></div></div><h2>${title}</h2><p class="muted" style="line-height:1.65">${desc}</p>`; }
 
   function renderSetup() {
     if (!card) return;
-    card.innerHTML = `${baseHeader('Primeiro acesso','Crie o administrador.','Este cadastro será o acesso principal ao sistema. A senha é armazenada somente de forma criptografada.')}
-      <form id="setupForm" style="display:grid;gap:12px;margin-top:20px">
-        <label><span class="label">Nome do administrador</span><input class="input" name="name" autocomplete="name" required minlength="2" placeholder="Seu nome"></label>
-        <label><span class="label">E-mail</span><input class="input" name="email" type="email" autocomplete="email" required placeholder="voce@empresa.com"></label>
-        <label><span class="label">Senha</span><input class="input" name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="Mínimo de 8 caracteres"></label>
-        <label><span class="label">Confirmar senha</span><input class="input" name="confirm" type="password" autocomplete="new-password" required minlength="8" placeholder="Repita a senha"></label>
-        <div id="authMessage" style="font-size:11px;min-height:16px"></div>
-        <button class="btn btn-dark btn-full" type="submit">Criar acesso e entrar →</button>
-      </form>
-      <div class="footnote">O primeiro administrador será o responsável pelo acesso aos dados da loja.</div>`;
-    document.getElementById('setupForm').onsubmit = async (event) => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      const fd = new FormData(form);
-      const password = String(fd.get('password') || '');
-      if (password !== String(fd.get('confirm') || '')) return message('As senhas não coincidem.', true);
-      const button = form.querySelector('button'); button.disabled = true; button.textContent = 'Criando acesso...';
-      try {
-        const result = await api({ action:'setup', name:String(fd.get('name')||'').trim(), email:String(fd.get('email')||'').trim(), password });
-        await unlock(result.user);
-      } catch (err) {
-        message(err.status === 409 ? 'O administrador já foi configurado. Atualize a página.' : 'Não foi possível criar o acesso. Verifique os dados e tente novamente.', true);
-        button.disabled = false; button.textContent = 'Criar acesso e entrar →';
-      }
-    };
+    card.innerHTML = `${baseHeader('Primeiro acesso','Crie o administrador.','Este cadastro será o acesso principal ao sistema. A senha é armazenada somente de forma criptografada.')}<form id="setupForm" style="display:grid;gap:12px;margin-top:20px"><label><span class="label">Nome do administrador</span><input class="input" name="name" autocomplete="name" required minlength="2" placeholder="Seu nome"></label><label><span class="label">E-mail</span><input class="input" name="email" type="email" autocomplete="email" required placeholder="voce@empresa.com"></label><label><span class="label">Senha</span><input class="input" name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="Mínimo de 8 caracteres"></label><label><span class="label">Confirmar senha</span><input class="input" name="confirm" type="password" autocomplete="new-password" required minlength="8" placeholder="Repita a senha"></label><div id="authMessage" style="font-size:11px;min-height:16px"></div><button class="btn btn-dark btn-full" type="submit">Criar acesso e entrar →</button></form><div class="footnote">O primeiro administrador será o responsável pelo acesso aos dados da loja.</div>`;
+    document.getElementById('setupForm').onsubmit = async (event) => { event.preventDefault(); const form = event.currentTarget; const fd = new FormData(form); const password = String(fd.get('password') || ''); if (password !== String(fd.get('confirm') || '')) return message('As senhas não coincidem.', true); const button = form.querySelector('button'); button.disabled = true; button.textContent = 'Criando acesso...'; try { const result = await authApi({ action:'setup', name:String(fd.get('name')||'').trim(), email:String(fd.get('email')||'').trim(), password }); await unlock(result.user); } catch (err) { message(err.status === 409 ? 'O administrador já foi configurado. Atualize a página.' : 'Não foi possível criar o acesso. Verifique os dados e tente novamente.', true); button.disabled = false; button.textContent = 'Criar acesso e entrar →'; } };
   }
 
   function renderLogin() {
     if (!card) return;
-    card.innerHTML = `${baseHeader('Acesso seguro','Bem-vindo.','Entre com o usuário administrador para acessar clientes, estoque, vendas e financeiro.')}
-      <form id="loginForm" style="display:grid;gap:12px;margin-top:20px">
-        <label><span class="label">E-mail</span><input class="input" name="email" type="email" autocomplete="username" required placeholder="Seu e-mail"></label>
-        <label><span class="label">Senha</span><input class="input" name="password" type="password" autocomplete="current-password" required placeholder="Sua senha"></label>
-        <div id="authMessage" style="font-size:11px;min-height:16px"></div>
-        <button class="btn btn-dark btn-full" type="submit">Entrar no sistema →</button>
-      </form>
-      <div class="footnote">A sessão é protegida e expira automaticamente por segurança.</div>`;
-    document.getElementById('loginForm').onsubmit = async (event) => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      const fd = new FormData(form);
-      const button = form.querySelector('button'); button.disabled = true; button.textContent = 'Entrando...';
-      try {
-        const result = await api({ action:'login', email:String(fd.get('email')||'').trim(), password:String(fd.get('password')||'') });
-        await unlock(result.user);
-      } catch (err) {
-        message(err.status === 401 ? 'E-mail ou senha incorretos.' : 'Não foi possível entrar agora. Tente novamente.', true);
-        button.disabled = false; button.textContent = 'Entrar no sistema →';
-      }
-    };
+    card.innerHTML = `${baseHeader('Acesso seguro','Bem-vindo.','Entre com seu usuário para acessar o Elegance Move.')}<form id="loginForm" style="display:grid;gap:12px;margin-top:20px"><label><span class="label">E-mail</span><input class="input" name="email" type="email" autocomplete="username" required placeholder="Seu e-mail"></label><label><span class="label">Senha</span><input class="input" name="password" type="password" autocomplete="current-password" required placeholder="Sua senha"></label><div id="authMessage" style="font-size:11px;min-height:16px"></div><button class="btn btn-dark btn-full" type="submit">Entrar no sistema →</button></form><div class="footnote">O acesso respeita o perfil definido pelo administrador.</div>`;
+    document.getElementById('loginForm').onsubmit = async (event) => { event.preventDefault(); const form = event.currentTarget; const fd = new FormData(form); const button = form.querySelector('button'); button.disabled = true; button.textContent = 'Entrando...'; try { const result = await authApi({ action:'login', email:String(fd.get('email')||'').trim(), password:String(fd.get('password')||'') }); await unlock(result.user); } catch (err) { message(err.status === 401 ? 'E-mail ou senha incorretos, ou usuário inativo.' : 'Não foi possível entrar agora. Tente novamente.', true); button.disabled = false; button.textContent = 'Entrar no sistema →'; } };
   }
 
   function installLogout(user) {
     const top = $('.top-actions');
-    if (top && !document.getElementById('logoutBtn')) {
-      const button = document.createElement('button');
-      button.id = 'logoutBtn'; button.className = 'btn btn-soft'; button.textContent = 'Sair';
-      button.onclick = async () => { button.disabled = true; await api({ action:'logout' }).catch(()=>{}); try{sessionStorage.clear()}catch{} location.reload(); };
-      top.prepend(button);
-    }
-    const nameEl = $('.userbox-text b'); if (nameEl) nameEl.textContent = user?.name || 'Administrador';
-    const roleEl = $('.userbox-text span'); if (roleEl) roleEl.textContent = user?.role === 'admin' ? 'Administrador' : (user?.email || 'Usuário');
+    if (top && !document.getElementById('logoutBtn')) { const button = document.createElement('button'); button.id = 'logoutBtn'; button.className = 'btn btn-soft'; button.textContent = 'Sair'; button.onclick = async () => { button.disabled = true; await authApi({ action:'logout' }).catch(()=>{}); try{sessionStorage.clear()}catch{} location.reload(); }; top.prepend(button); }
+    const nameEl = $('.userbox-text b'); if (nameEl) nameEl.textContent = user?.name || 'Usuário';
+    const roleEl = $('.userbox-text span'); if (roleEl) roleEl.textContent = roleLabel(user?.role);
+  }
+
+  function allowed(pageName) { return (ROLE_PAGES[currentUser?.role] || ROLE_PAGES.seller).has(pageName); }
+
+  function installRoleStyle() {
+    roleStyle?.remove(); roleStyle = document.createElement('style'); roleStyle.id = 'role-access-style';
+    const restricted = ['dashboard','clientes','vendas','orcamentos','receber','estoque','entradas','caixa','sistema'].filter(p => !allowed(p));
+    const rules = restricted.map(p => `[data-page="${p}"]{display:none!important}`).join('\n');
+    roleStyle.textContent = rules + (currentUser?.role === 'seller' ? `#globalSearch,.top-search{display:none!important}body[data-user-role="seller"] [data-action="new-product"],body[data-user-role="seller"] [data-action="new-entry"],body[data-user-role="seller"] [data-action="new-expense"]{display:none!important}` : '');
+    document.head.appendChild(roleStyle);
+  }
+
+  function cleanSellerSensitiveUi(root=document) {
+    if (currentUser?.role !== 'seller') return;
+    root.querySelectorAll?.('.metric').forEach(el => { const label = el.querySelector('small')?.textContent?.trim().toLowerCase(); if (label === 'lucro bruto' || label === 'capital em estoque') el.style.display = 'none'; });
+    root.querySelectorAll?.('.status-box').forEach(el => { const t = el.textContent?.toLowerCase() || ''; if (t.includes('custo conhecido') || t.includes('custo médio atual') || t.includes('precificação e lucro')) el.style.display = 'none'; });
+  }
+
+  function decorateSystemPage() {
+    if (currentUser?.role !== 'admin') return;
+    const grid = document.querySelector('.system-grid'); if (!grid || document.getElementById('usersAccessCard')) return;
+    const section = document.createElement('section'); section.className = 'card card-pad'; section.id = 'usersAccessCard';
+    section.innerHTML = `<div class="eyebrow">Acessos</div><h2 class="serif" style="font-size:24px;margin:7px 0 16px">Usuários e permissões</h2><div class="status-box"><span class="tag ok">Protegido</span><div style="margin-top:12px;font-weight:800">Controle quem entra no sistema</div><p class="muted" style="font-size:12px;line-height:1.6;margin-bottom:0">Crie administradores, gerentes e vendedores. Desative acessos e redefina senhas sem apagar o histórico.</p></div><button id="manageUsersBtn" class="btn btn-dark btn-full" style="margin-top:14px">Gerenciar usuários</button>`;
+    grid.appendChild(section); document.getElementById('manageUsersBtn').onclick = openUsers;
+  }
+
+  function applyRoleUi() {
+    if (!currentUser) return; document.body.dataset.userRole = currentUser.role; installRoleStyle(); cleanSellerSensitiveUi(document); decorateSystemPage();
+    document.querySelectorAll('[data-page]').forEach(el => { const p = el.dataset.page; if (p && !allowed(p)) el.setAttribute('aria-hidden','true'); });
+  }
+
+  function installRoleGuard() {
+    if (window.__emRoleGuardInstalled) return; window.__emRoleGuardInstalled = true;
+    const originalGo = window.go;
+    if (typeof originalGo === 'function') window.go = (p) => { if (!allowed(String(p))) { if (typeof window.toast === 'function') window.toast('Seu perfil não tem acesso a esta área.','err'); return; } originalGo(p); queueMicrotask(applyRoleUi); };
+    document.addEventListener('click', (event) => { const target = event.target.closest?.('[data-page]'); if (target?.dataset?.page && !allowed(target.dataset.page)) { event.preventDefault(); event.stopImmediatePropagation(); if (typeof window.toast === 'function') window.toast('Seu perfil não tem acesso a esta área.','err'); } }, true);
+    uiObserver = new MutationObserver(() => applyRoleUi()); uiObserver.observe(document.body, { childList:true, subtree:true });
+  }
+
+  function userRows(users, selfId) { return users.map(u => `<tr><td><b>${escapeHtml(u.name)}</b><div class="muted" style="font-size:9px;margin-top:4px">${escapeHtml(u.email)}</div></td><td><span class="tag ${u.role==='admin'?'vip':u.role==='manager'?'ok':'low'}">${roleLabel(u.role)}</span></td><td>${u.active?'<span class="tag ok">Ativo</span>':'<span class="tag low">Inativo</span>'}</td><td>${escapeHtml(dateTime(u.lastLoginAt))}</td><td><div class="actions"><button class="iconbtn" data-edit-user="${u.id}" title="Editar">✎</button>${u.id===selfId?'':`<button class="iconbtn" data-reset-user="${u.id}" title="Redefinir senha">⌘</button>`}</div></td></tr>`).join(''); }
+
+  async function openUsers() {
+    if (currentUser?.role !== 'admin') return;
+    try { const result = await usersApi(); const users = result.users || []; window.modal?.({ wide:true, ey:'Sistema', title:'Usuários e acessos', body:`<div class="story-banner" style="margin-top:0"><div class="story-step">08</div><div><b>Acesso certo para cada função</b><p>Administrador controla tudo; Gerente opera a loja; Vendedor trabalha clientes, orçamentos e vendas sem custos e lucro.</p></div></div><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin:16px 0;flex-wrap:wrap"><div><b>${users.length} usuário(s)</b><div class="muted" style="font-size:10px;margin-top:3px">Acessos cadastrados no banco online.</div></div><button id="newUserBtn" class="btn btn-dark">＋ Novo usuário</button></div><div class="card table-card"><div class="table-wrap"><table class="table"><thead><tr><th>Usuário</th><th>Perfil</th><th>Status</th><th>Último acesso</th><th>Ações</th></tr></thead><tbody>${userRows(users,result.currentUserId)}</tbody></table></div></div><div class="status-box" style="margin-top:14px"><b>Permissões</b><p class="muted" style="font-size:10px;line-height:1.6;margin-bottom:0"><b>Administrador:</b> tudo, inclusive usuários e configurações. <b>Gerente:</b> operação completa, exceto usuários. <b>Vendedor:</b> clientes, orçamentos e vendas; sem custo, lucro, entradas, caixa ou configurações.</p></div>` }); document.getElementById('newUserBtn').onclick = () => userForm(); document.querySelectorAll('[data-edit-user]').forEach(b => b.onclick = () => userForm(users.find(u=>u.id===b.dataset.editUser))); document.querySelectorAll('[data-reset-user]').forEach(b => b.onclick = () => resetPassword(users.find(u=>u.id===b.dataset.resetUser))); }
+    catch (err) { if (typeof window.toast === 'function') window.toast(err.status===403?'Somente administradores podem gerenciar usuários.':'Não foi possível carregar os usuários.','err'); }
+  }
+
+  function userForm(user=null) {
+    const editing = Boolean(user), self = user?.id === currentUser?.id;
+    window.modal?.({ ey:'Acessos', title:editing?'Editar usuário':'Novo usuário', body:`<form id="userForm" class="form-grid"><label><span class="label">Nome</span><input class="input" name="name" required minlength="2" value="${escapeHtml(user?.name||'')}" placeholder="Nome do usuário"></label><label><span class="label">E-mail</span><input class="input" name="email" type="email" required value="${escapeHtml(user?.email||'')}" placeholder="usuario@empresa.com"></label><label><span class="label">Perfil</span><select class="input" name="role" ${self?'disabled':''}><option value="seller" ${user?.role==='seller'?'selected':''}>Vendedor</option><option value="manager" ${user?.role==='manager'?'selected':''}>Gerente</option><option value="admin" ${user?.role==='admin'?'selected':''}>Administrador</option></select></label>${editing?`<label><span class="label">Status</span><select class="input" name="active" ${self?'disabled':''}><option value="true" ${user?.active?'selected':''}>Ativo</option><option value="false" ${!user?.active?'selected':''}>Inativo</option></select></label>`:`<label><span class="label">Senha provisória</span><input class="input" name="password" type="password" required minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label>`}<div class="span2 status-box"><b id="roleHelp">${ROLE_DESC[user?.role||'seller']}</b></div><div id="userFormMessage" class="span2" style="font-size:10px;color:#a9584e;min-height:14px"></div><div class="form-actions"><button type="button" id="cancelUser" class="btn btn-soft">Cancelar</button><button type="submit" class="btn btn-dark">${editing?'Salvar alterações':'Criar usuário'}</button></div></form>` });
+    const form = document.getElementById('userForm'), role = form.elements.role; role?.addEventListener('change',()=>{document.getElementById('roleHelp').textContent=ROLE_DESC[role.value]||''}); document.getElementById('cancelUser').onclick = openUsers;
+    form.onsubmit = async (event) => { event.preventDefault(); const fd = new FormData(form); const payload = editing ? { action:'update', id:user.id, name:String(fd.get('name')||'').trim(), email:String(fd.get('email')||'').trim(), role:self?'admin':String(fd.get('role')||'seller'), active:self?true:String(fd.get('active'))!=='false' } : { action:'create', name:String(fd.get('name')||'').trim(), email:String(fd.get('email')||'').trim(), role:String(fd.get('role')||'seller'), password:String(fd.get('password')||'') }; const submit=form.querySelector('button[type="submit"]'); submit.disabled=true; try { await usersApi(payload); if(typeof window.toast==='function')window.toast(editing?'Usuário atualizado.':'Usuário criado.'); await openUsers(); } catch(err){ const el=document.getElementById('userFormMessage'); if(el)el.textContent=err.code==='Email already exists'?'Este e-mail já está em uso.':err.code==='At least one active admin is required'?'É necessário manter pelo menos um administrador ativo.':'Não foi possível salvar o usuário.'; submit.disabled=false; } };
+  }
+
+  function resetPassword(user) {
+    if (!user) return;
+    window.modal?.({ ey:'Segurança', title:'Redefinir senha', body:`<form id="resetPasswordForm" class="form-grid"><div class="span2 status-box"><b>${escapeHtml(user.name)}</b><p class="muted" style="font-size:10px;margin-bottom:0">A nova senha encerra todas as sessões desse usuário. Ele precisará entrar novamente.</p></div><label><span class="label">Nova senha provisória</span><input class="input" name="password" type="password" minlength="8" required autocomplete="new-password"></label><label><span class="label">Confirmar senha</span><input class="input" name="confirm" type="password" minlength="8" required autocomplete="new-password"></label><div id="resetMessage" class="span2" style="font-size:10px;color:#a9584e;min-height:14px"></div><div class="form-actions"><button type="button" id="cancelReset" class="btn btn-soft">Cancelar</button><button class="btn btn-dark">Redefinir senha</button></div></form>` }); document.getElementById('cancelReset').onclick = openUsers;
+    document.getElementById('resetPasswordForm').onsubmit = async (event) => { event.preventDefault(); const fd=new FormData(event.currentTarget), password=String(fd.get('password')||''); if(password!==String(fd.get('confirm')||'')){document.getElementById('resetMessage').textContent='As senhas não coincidem.';return;} try{await usersApi({action:'reset-password',id:user.id,password});if(typeof window.toast==='function')window.toast('Senha redefinida e sessões encerradas.');await openUsers();} catch{document.getElementById('resetMessage').textContent='Não foi possível redefinir a senha.';} };
   }
 
   async function unlock(user) {
-    document.body.classList.remove('auth-pending');
-    if (login) login.classList.add('hidden');
-    if (app) app.classList.remove('hidden');
-    installLogout(user);
-    if (typeof window.showApp === 'function') await window.showApp();
+    currentUser = user; window.EM_CURRENT_USER = user; document.body.dataset.userRole = user?.role || 'seller'; if (login) login.classList.add('hidden'); if (app) app.classList.remove('hidden'); installLogout(user); installRoleGuard(); if (typeof window.showApp === 'function') await window.showApp(); if (user?.role === 'seller' && typeof window.go === 'function') window.go('vendas'); applyRoleUi(); document.body.classList.remove('auth-pending');
   }
 
   async function boot() {
-    document.body.classList.add('auth-pending');
-    try { sessionStorage.removeItem('em-store-session-v1'); } catch {}
-    if (app) app.classList.add('hidden');
-    if (login) login.classList.remove('hidden');
-    try {
-      const status = await api();
-      if (status.user) return unlock(status.user);
-      document.body.classList.remove('auth-pending');
-      status.configured ? renderLogin() : renderSetup();
-    } catch {
-      document.body.classList.remove('auth-pending');
-      if (card) card.innerHTML = `${baseHeader('Conexão','Não foi possível validar o acesso.','O serviço de autenticação não respondeu. Atualize a página em alguns instantes.')}`;
-    }
+    document.body.classList.add('auth-pending'); try { sessionStorage.removeItem('em-store-session-v1'); } catch {} if (app) app.classList.add('hidden'); if (login) login.classList.remove('hidden');
+    try { const status = await authApi(); if (status.user) return unlock(status.user); document.body.classList.remove('auth-pending'); status.configured ? renderLogin() : renderSetup(); }
+    catch { document.body.classList.remove('auth-pending'); if (card) card.innerHTML = `${baseHeader('Conexão','Não foi possível validar o acesso.','O serviço de autenticação não respondeu. Atualize a página em alguns instantes.')}`; }
   }
 
   boot();
