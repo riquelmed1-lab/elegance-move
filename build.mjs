@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 
-const SOURCE = 'https://6aa44187940d50bd7c2623fa--elegance-move.netlify.app';
+const SOURCE = 'https://elegance-move.netlify.app';
 
 const res = await fetch(SOURCE, { headers: { 'user-agent': 'elegance-move-build' } });
 if (!res.ok) throw new Error(`Falha ao buscar frontend base: ${res.status}`);
@@ -33,6 +33,7 @@ if (html.includes(oldSave)) html = html.replace(oldSave, cloudLayer);
 const localShowApp = "function showApp(){document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');render()}";
 const cloudShowApp = "async function showApp(){document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');render();await hydrateCloud()}";
 if (html.includes(localShowApp)) html = html.replace(localShowApp, cloudShowApp);
+if (html.includes(cloudShowApp) && !html.includes('window.showApp=showApp')) html = html.replace(cloudShowApp, cloudShowApp + "\nwindow.showApp=showApp;");
 
 html = html.replace('>Banco local<', '>Banco online<');
 html = html.replace('>Pronto para nuvem<', '>Dados na nuvem<');
