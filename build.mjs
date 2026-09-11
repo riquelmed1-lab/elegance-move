@@ -2,7 +2,19 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 
-const chunkNames = Array.from({ length: 9 }, (_, i) => `frontend/chunks/${String(i).padStart(3, '0')}.b64`);
+const chunkNames = [
+  'frontend/chunks/000.b64',
+  'frontend/chunks/001.b64',
+  'frontend/chunks/002.b64',
+  'frontend/chunks/003.b64',
+  'frontend/chunks/004.b64',
+  'frontend/chunks/005.b64',
+  'frontend/chunks/006.b64',
+  'frontend/chunks/007a.b64',
+  'frontend/chunks/007b.b64',
+  'frontend/chunks/008.b64'
+];
+
 const parts = [];
 for (const file of chunkNames) parts.push((await readFile(file, 'utf8')).trim());
 const encoded = parts.join('');
