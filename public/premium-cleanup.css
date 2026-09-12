@@ -90,6 +90,177 @@
 #content.premium-dashboard .dashboard-lower,
 .content.premium-dashboard .dashboard-lower{margin-top:12px!important;gap:12px!important}
 
+/* ELEGANCE_MOVE_MOBILE_FIX_V2
+   Mobile header, rankings, product rows and bottom safe-area corrections. */
+@media(max-width:760px){
+  .topbar{
+    height:68px!important;
+    padding:0 12px!important;
+    gap:10px!important;
+  }
+  .top-left{
+    flex:0 0 auto!important;
+    min-width:0!important;
+  }
+  .top-actions{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:8px!important;
+    margin-left:auto!important;
+    min-width:0!important;
+  }
+  #logoutBtn{display:none!important}
+  .top-actions>[data-action="new-sale"]{
+    display:grid!important;
+    place-items:center!important;
+    width:42px!important;
+    height:42px!important;
+    min-width:42px!important;
+    min-height:42px!important;
+    max-width:42px!important;
+    max-height:42px!important;
+    padding:0!important;
+    border-radius:12px!important;
+    font-size:0!important;
+    line-height:1!important;
+    overflow:hidden!important;
+  }
+  .top-actions>[data-action="new-sale"]:before{
+    content:"+"!important;
+    display:block!important;
+    font-size:24px!important;
+    line-height:1!important;
+    font-weight:500!important;
+    color:#6f4c44!important;
+  }
+  .userbox{
+    display:flex!important;
+    align-items:center!important;
+    gap:6px!important;
+    padding-left:0!important;
+    margin-left:0!important;
+    min-width:0!important;
+  }
+  .userbox-text{display:none!important}
+  .avatar{
+    width:42px!important;
+    height:42px!important;
+    min-width:42px!important;
+    min-height:42px!important;
+  }
+  .premium-user-chevron{
+    margin-left:0!important;
+    font-size:12px!important;
+    line-height:1!important;
+  }
+
+  /* Prevent the fixed bottom navigation from covering dashboard content. */
+  .content{
+    padding-bottom:calc(136px + env(safe-area-inset-bottom))!important;
+  }
+  .mobile-nav{
+    left:10px!important;
+    right:10px!important;
+    bottom:calc(8px + env(safe-area-inset-bottom))!important;
+    padding:6px!important;
+    border-radius:18px!important;
+  }
+  .mobile-nav button{min-width:0!important}
+
+  /* Top 3 clients: rank | avatar | client copy | amount, with no overlap. */
+  .premium-lower-2 .list-row{
+    display:flex!important;
+    align-items:center!important;
+    gap:10px!important;
+    padding:12px 0!important;
+    min-width:0!important;
+  }
+  .premium-lower-2 .premium-rank{
+    width:28px!important;
+    height:28px!important;
+    min-width:28px!important;
+    flex:0 0 28px!important;
+  }
+  .premium-lower-2 .list-row-main{
+    display:grid!important;
+    grid-template-columns:38px minmax(0,1fr)!important;
+    grid-template-rows:auto auto!important;
+    column-gap:10px!important;
+    row-gap:2px!important;
+    align-items:center!important;
+    min-width:0!important;
+    flex:1 1 auto!important;
+  }
+  .premium-lower-2 .premium-client-avatar{
+    float:none!important;
+    margin:0!important;
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    grid-column:1!important;
+    grid-row:1 / 3!important;
+  }
+  .premium-lower-2 .list-row-main b{
+    grid-column:2!important;
+    grid-row:1!important;
+    min-width:0!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    font-size:12px!important;
+  }
+  .premium-lower-2 .list-row-main span{
+    grid-column:2!important;
+    grid-row:2!important;
+    min-width:0!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    font-size:9.5px!important;
+  }
+  .premium-lower-2 .list-row-value{
+    margin-left:4px!important;
+    flex:0 0 auto!important;
+    font-size:12px!important;
+  }
+
+  /* Best sellers: compact thumbnail, readable two-line name and aligned quantity. */
+  .premium-lower-3 .list-row{
+    display:grid!important;
+    grid-template-columns:46px minmax(0,1fr) auto!important;
+    gap:12px!important;
+    align-items:center!important;
+    padding:13px 0!important;
+    min-width:0!important;
+  }
+  .premium-lower-3 .premium-product-thumb{
+    width:46px!important;
+    height:46px!important;
+    min-width:46px!important;
+    margin:0!important;
+  }
+  .premium-lower-3 .list-row-main{min-width:0!important}
+  .premium-lower-3 .list-row-main b{
+    display:-webkit-box!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+    white-space:normal!important;
+    overflow:hidden!important;
+    line-height:1.25!important;
+    font-size:11.5px!important;
+  }
+  .premium-lower-3 .list-row-main span{
+    font-size:9px!important;
+    line-height:1.35!important;
+  }
+  .premium-lower-3 .list-row-value{
+    font-size:11.5px!important;
+    align-self:center!important;
+    margin-left:0!important;
+  }
+}
+
 @media(max-width:1180px){
   #content.premium-dashboard .kpi-grid,
   .content.premium-dashboard .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
@@ -107,4 +278,19 @@
   .content.premium-dashboard .kpi-grid,
   #content.premium-dashboard .premium-kpi-secondary,
   .content.premium-dashboard .premium-kpi-secondary{grid-template-columns:1fr!important}
+  .topbar{height:66px!important;padding:0 10px!important}
+  .top-actions{gap:7px!important}
+  .top-actions>[data-action="new-sale"],
+  .avatar{
+    width:40px!important;
+    height:40px!important;
+    min-width:40px!important;
+    min-height:40px!important;
+  }
+  .content{padding-left:12px!important;padding-right:12px!important}
+  .premium-lower-2 .list-row{gap:8px!important}
+  .premium-lower-2 .premium-rank{width:26px!important;height:26px!important;min-width:26px!important;flex-basis:26px!important}
+  .premium-lower-2 .list-row-main{grid-template-columns:34px minmax(0,1fr)!important;column-gap:8px!important}
+  .premium-lower-2 .premium-client-avatar{width:34px!important;height:34px!important;min-width:34px!important}
+  .premium-lower-2 .list-row-value{font-size:11px!important}
 }
