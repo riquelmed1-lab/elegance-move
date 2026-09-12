@@ -7,6 +7,6 @@
     "@netlify/functions": "latest"
   },
   "scripts": {
-    "build": "node build.mjs && node patch-entry-delete.mjs && node patch-dashboard-entry-sync.mjs && node patch-monthly-profit.mjs && node inject-users-ui.mjs && node generate-supabase-config.mjs"
+    "build": "node build.mjs && node patch-entry-delete.mjs && node patch-dashboard-entry-sync.mjs && node patch-monthly-profit.mjs && node inject-users-ui.mjs && node inject-password-recovery.mjs && node generate-supabase-config.mjs"
   }
 }
