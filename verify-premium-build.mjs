@@ -7,7 +7,7 @@ const [html,baseCss,fidelity,hotfixCss,cleanupCss,js,hotfixJs,cleanupJs,svg,auth
   readFile('public/index.html','utf8'),readFile('public/premium-theme.css','utf8'),readFile('public/premium-fidelity.css','utf8'),readFile('public/premium-hotfix.css','utf8'),readFile('public/premium-cleanup.css','utf8'),readFile('public/premium-theme.js','utf8'),readFile('public/premium-hotfix.js','utf8'),readFile('public/premium-cleanup.js','utf8'),readFile('public/premium-fashion.svg','utf8'),readFile('public/auth.js','utf8'),readFile('public/password-recovery.js','utf8'),readFile('public/users-ui.js','utf8')
 ]);
 
-const htmlMarkers=['id="elegance-premium-critical"','id="elegance-premium-runtime"','/auth.js','/password-recovery.js','/users-ui.js','Faturamento do mês','Lucro líquido do mês','Hard SVG isolation','sanitizeMetricSvg','ELEGANCE_MOVE_CLEANUP_V1','premium-financial-duplicate'];
+const htmlMarkers=['id="elegance-premium-critical"','id="elegance-premium-runtime"','/auth.js','/password-recovery.js','/users-ui.js','Faturamento do mês','Lucro líquido do mês','Hard SVG isolation','sanitizeMetricSvg','ELEGANCE_MOVE_CLEANUP_V1','ELEGANCE_MOVE_MOBILE_FIX_V2','premium-financial-duplicate'];
 for(const marker of htmlMarkers) if(!html.includes(marker)) throw new Error(`Build incompleto: ${marker}`);
 
 const bodyOpen=html.indexOf('<body');
@@ -17,7 +17,7 @@ if(bodyOpen<0||styleIndex<0||styleIndex>bodyOpen) throw new Error('CSS premium f
 if(runtimeIndex<bodyOpen) throw new Error('Runtime premium foi injetado antes do <body>');
 
 const cssAll=baseCss+fidelity+hotfixCss+cleanupCss;
-const cssMarkers=['.premium-side-story','.premium-brand-card','.premium-sparkline','.premium-donut','Hard SVG isolation','ELEGANCE_MOVE_CLEANUP_V1','premium-financial-duplicate','grid-template-columns:repeat(4,minmax(0,1fr))','@media(max-width:1024px)','@media(max-width:760px)','@media(max-width:480px)'];
+const cssMarkers=['.premium-side-story','.premium-brand-card','.premium-sparkline','.premium-donut','Hard SVG isolation','ELEGANCE_MOVE_CLEANUP_V1','ELEGANCE_MOVE_MOBILE_FIX_V2','#logoutBtn','premium-lower-2 .list-row-main','premium-lower-3 .list-row','premium-financial-duplicate','grid-template-columns:repeat(4,minmax(0,1fr))','@media(max-width:1024px)','@media(max-width:760px)','@media(max-width:480px)'];
 for(const marker of cssMarkers) if(!cssAll.includes(marker)) throw new Error(`CSS premium incompleto: ${marker}`);
 
 const jsAll=js+'\n'+hotfixJs+'\n'+cleanupJs;
@@ -35,7 +35,7 @@ const codeEnd=html.indexOf('</script>',codeStart);
 if(codeEnd<0) throw new Error('Fim do script principal não encontrado');
 const mainCode=html.slice(codeStart,codeEnd);
 for(const marker of ['function render()','function dashboard()','window.showApp=showApp','window.__EM_TEST__']) if(!mainCode.includes(marker)) throw new Error(`Script principal incompleto: ${marker}`);
-for(const marker of ['function nextCommercialNumber(type)','function commercialDisplayNumber(record,type)',"numberLabel=isQuote?'Orçamento:':'Pedido:'",'orderNo:nextCommercialNumber','quoteNo:nextCommercialNumber','Térmica 80 mm','payment-status paid']) if(!mainCode.includes(marker)) throw new Error(`Documento comercial premium incompleto: ${marker}`);
+for(const marker of ['function nextCommercialNumber(type)','function commercialDisplayNumber(record,type)',"numberLabel=isQuote?'Orçamento:':'Pedido:'",'orderNo:nextCommercialNumber','quoteNo:nextCommercialNumber','Térmica 80 mm','payment-status paid','(84) 99638-1431']) if(!mainCode.includes(marker)) throw new Error(`Documento comercial premium incompleto: ${marker}`);
 new Function(mainCode);
 
 if(!svg.startsWith('<svg')||!svg.includes('viewBox="0 0 520 520"')) throw new Error('Ilustração premium inválida');
@@ -43,4 +43,4 @@ if((html.match(/id="elegance-premium-critical"/g)||[]).length!==1) throw new Err
 if((html.match(/id="elegance-premium-runtime"/g)||[]).length!==1) throw new Error('JS premium inline duplicado');
 if(html.includes('href="/premium-theme.css"')||html.includes('href="/premium-fidelity.css"')||html.includes('href="/premium-cleanup.css"')||html.includes('src="/premium-theme.js"')||html.includes('src="/premium-cleanup.js"')) throw new Error('Build ainda depende de assets premium externos');
 
-console.log('PREMIUM_BUILD_VERIFIED',{htmlBytes:Buffer.byteLength(html),cssBytes:Buffer.byteLength(cssAll),jsBytes:Buffer.byteLength(jsAll),mainScriptBytes:Buffer.byteLength(mainCode),svgBytes:Buffer.byteLength(svg),placement:'safe',cleanup:true,commercialDocument:true});
+console.log('PREMIUM_BUILD_VERIFIED',{htmlBytes:Buffer.byteLength(html),cssBytes:Buffer.byteLength(cssAll),jsBytes:Buffer.byteLength(jsAll),mainScriptBytes:Buffer.byteLength(mainCode),svgBytes:Buffer.byteLength(svg),placement:'safe',cleanup:true,mobileFix:true,commercialDocument:true,printContact:true});
