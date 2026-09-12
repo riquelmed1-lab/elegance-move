@@ -41,7 +41,7 @@ html=html.replace(saleNeedle,"sale={id:id('sale'),orderNo:nextCommercialNumber('
 const detailNeedle="title:'Pedido '+esc(s.id.slice(-6).toUpperCase())";
 if(html.includes(detailNeedle)) html=html.replace(detailNeedle,"title:'Pedido '+commercialDisplayNumber(s,'sale')");
 
-for(const marker of ['function nextCommercialNumber(type)','Pedido:</span><strong>','Térmica 80 mm','payment-status paid','orderNo:nextCommercialNumber','quoteNo:nextCommercialNumber']){
+for(const marker of ['function nextCommercialNumber(type)',"numberLabel=isQuote?'Orçamento:':'Pedido:'",'Térmica 80 mm','payment-status paid','orderNo:nextCommercialNumber','quoteNo:nextCommercialNumber']){
   if(!html.includes(marker)) throw new Error('Documento premium incompleto: '+marker);
 }
 
