@@ -35,7 +35,7 @@ const codeEnd=html.indexOf('</script>',codeStart);
 if(codeEnd<0) throw new Error('Fim do script principal não encontrado');
 const mainCode=html.slice(codeStart,codeEnd);
 for(const marker of ['function render()','function dashboard()','window.showApp=showApp','window.__EM_TEST__']) if(!mainCode.includes(marker)) throw new Error(`Script principal incompleto: ${marker}`);
-for(const marker of ['function nextCommercialNumber(type)','function commercialDisplayNumber(record,type)','orderNo:nextCommercialNumber','quoteNo:nextCommercialNumber','Térmica 80 mm','Pedido:</span><strong>','payment-status paid']) if(!mainCode.includes(marker)) throw new Error(`Documento comercial premium incompleto: ${marker}`);
+for(const marker of ['function nextCommercialNumber(type)','function commercialDisplayNumber(record,type)',"numberLabel=isQuote?'Orçamento:':'Pedido:'",'orderNo:nextCommercialNumber','quoteNo:nextCommercialNumber','Térmica 80 mm','payment-status paid']) if(!mainCode.includes(marker)) throw new Error(`Documento comercial premium incompleto: ${marker}`);
 new Function(mainCode);
 
 if(!svg.startsWith('<svg')||!svg.includes('viewBox="0 0 520 520"')) throw new Error('Ilustração premium inválida');
