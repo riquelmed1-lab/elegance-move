@@ -1,0 +1,110 @@
+/* ELEGANCE_MOVE_CLEANUP_V1
+   Final dashboard cleanup based on the approved marked-up production screenshot. */
+
+/* Remove decorative elements the user explicitly marked for removal. */
+.premium-motto,
+.premium-side-story,
+.premium-brand-card,
+.premium-sparkline{display:none!important}
+
+/* Remove the shaded faux-sparkline fill behind primary KPI values. */
+.content.premium-dashboard .metric:after,
+#content.premium-dashboard .metric:after{display:none!important}
+
+/* Keep the sidebar functional and quiet: brand, navigation, cloud status only. */
+.sidebar{padding-bottom:18px!important}
+.sidebar .side-status{margin-top:auto!important}
+
+/* Main dashboard: 4 KPIs, then one full-width sales chart. */
+#content.premium-dashboard .dash-layout,
+.content.premium-dashboard .dash-layout{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto minmax(330px,auto)!important;
+  gap:12px!important;
+  width:100%!important;
+}
+#content.premium-dashboard .kpi-grid,
+.content.premium-dashboard .kpi-grid{
+  grid-column:1!important;
+  grid-row:1!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:12px!important;
+}
+#content.premium-dashboard .chart-panel,
+.content.premium-dashboard .chart-panel{
+  grid-column:1!important;
+  grid-row:2!important;
+  width:100%!important;
+  min-height:330px!important;
+}
+
+/* Primary KPIs: simple, compact, high-legibility cards. */
+#content.premium-dashboard .kpi-grid>.metric,
+.content.premium-dashboard .kpi-grid>.metric{
+  height:108px!important;
+  min-height:108px!important;
+  max-height:108px!important;
+  padding:16px 16px 14px 58px!important;
+}
+#content.premium-dashboard .kpi-grid>.metric strong,
+.content.premium-dashboard .kpi-grid>.metric strong{
+  font-size:22px!important;
+  margin-top:8px!important;
+}
+#content.premium-dashboard .kpi-grid>.metric em,
+.content.premium-dashboard .kpi-grid>.metric em{
+  max-width:100%!important;
+  font-size:8.5px!important;
+}
+
+/* Secondary finance summary: remove duplicated KPIs and keep 4 useful cards. */
+#content.premium-dashboard .premium-kpi-secondary,
+.content.premium-dashboard .premium-kpi-secondary{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:12px!important;
+  margin-top:12px!important;
+}
+#content.premium-dashboard .premium-kpi-secondary>.premium-financial-duplicate,
+.content.premium-dashboard .premium-kpi-secondary>.premium-financial-duplicate{
+  display:none!important;
+}
+#content.premium-dashboard .premium-kpi-secondary>.metric,
+.content.premium-dashboard .premium-kpi-secondary>.metric{
+  min-height:88px!important;
+  height:88px!important;
+  max-height:88px!important;
+  padding:14px 14px 12px 50px!important;
+}
+#content.premium-dashboard .premium-kpi-secondary .metric small,
+.content.premium-dashboard .premium-kpi-secondary .metric small{font-size:8.5px!important}
+#content.premium-dashboard .premium-kpi-secondary .metric strong,
+.content.premium-dashboard .premium-kpi-secondary .metric strong{font-size:17px!important;margin-top:6px!important}
+#content.premium-dashboard .premium-kpi-secondary .premium-metric-icon,
+.content.premium-dashboard .premium-kpi-secondary .premium-metric-icon{
+  width:28px!important;height:28px!important;left:12px!important;top:14px!important;
+}
+
+/* Lower analytics cards: breathing room after the financial summary. */
+#content.premium-dashboard .dashboard-lower,
+.content.premium-dashboard .dashboard-lower{margin-top:12px!important;gap:12px!important}
+
+@media(max-width:1180px){
+  #content.premium-dashboard .kpi-grid,
+  .content.premium-dashboard .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #content.premium-dashboard .premium-kpi-secondary,
+  .content.premium-dashboard .premium-kpi-secondary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:760px){
+  #content.premium-dashboard .kpi-grid,
+  .content.premium-dashboard .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #content.premium-dashboard .premium-kpi-secondary,
+  .content.premium-dashboard .premium-kpi-secondary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:480px){
+  #content.premium-dashboard .kpi-grid,
+  .content.premium-dashboard .kpi-grid,
+  #content.premium-dashboard .premium-kpi-secondary,
+  .content.premium-dashboard .premium-kpi-secondary{grid-template-columns:1fr!important}
+}
