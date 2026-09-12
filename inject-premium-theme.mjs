@@ -33,12 +33,18 @@ const safeJs=(js+'\n'+hotfixJs).replace(/<\/script/gi,'<\\/script');
 const styleTag=`<style id="elegance-premium-critical">\n${css}\n${fidelity}\n${hotfixCss}\n</style>`;
 const scriptTag=`<script id="elegance-premium-runtime">\n${safeJs}\n</script>`;
 
-const headClose=html.lastIndexOf('</head>');
-if(headClose<0) throw new Error('index.html sem </head>');
+// The application contains literal </head> text inside the JavaScript string used
+// to generate printable documents. Never inject by using the final </head> token.
+// Resolve the real document head only in the markup that appears before <body>.
+const bodyOpen=html.indexOf('<body');
+if(bodyOpen<0) throw new Error('index.html sem <body>');
+const headClose=html.lastIndexOf('</head>',bodyOpen);
+if(headClose<0) throw new Error('index.html sem </head> real');
 html=html.slice(0,headClose)+styleTag+html.slice(headClose);
+
 const bodyClose=html.lastIndexOf('</body>');
 if(bodyClose<0) throw new Error('index.html sem </body>');
 html=html.slice(0,bodyClose)+scriptTag+html.slice(bodyClose);
 
 await writeFile(indexPath,html,'utf8');
-console.log('PREMIUM_THEME_INLINE_OK',{cssBytes:Buffer.byteLength(css+fidelity+hotfixCss),jsBytes:Buffer.byteLength(js+hotfixJs),artBytes:Buffer.byteLength(art),indexBytes:Buffer.byteLength(html)});
+console.log('PREMIUM_THEME_INLINE_OK',{cssBytes:Buffer.byteLength(css+fidelity+hotfixCss),jsBytes:Buffer.byteLength(js+hotfixJs),artBytes:Buffer.byteLength(art),indexBytes:Buffer.byteLength(html),realHead:true});
