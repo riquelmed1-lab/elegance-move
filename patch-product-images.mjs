@@ -27,6 +27,10 @@ const objNeedle="const obj={id:p?.id||id('prod'),code,name,category,size:upperDa
 const objReplacement="const productId=p?.id||id('prod');let imageUrl=p?.imageUrl||'';const photoFile=photoInput.files?.[0];try{if(photoFile){toast('Enviando foto do produto...');imageUrl=await uploadProductPhoto(productId,photoFile)}else if(removePhoto&&p?.imageUrl){await deleteProductPhoto(productId);imageUrl=''}}catch(err){return toast(err?.message||'Não foi possível salvar a foto.','err')}const obj={id:productId,code,name,category,size:upperData(f.get('size')),color:upperData(f.get('color')),stock:Math.max(0,Number(f.get('stock')||0)),price:Math.max(0,Number(f.get('price')||0)),cost:Math.max(0,Number(f.get('cost')||0)),imageUrl};";
 if(html.includes(objNeedle)) html=html.replace(objNeedle,objReplacement); else if(!html.includes('let imageUrl=p?.imageUrl')) throw new Error('Objeto de produto não encontrado');
 
+const deleteProductNeedle="function delProduct(pid){const p=db.products.find(x=>x.id===pid);if(!p)return;confirmModal('Excluir produto?','O produto '+p.name+' será removido do estoque. O histórico das vendas será preservado.','Excluir produto',()=>{db.products=db.products.filter(x=>x.id!==pid);save();render();toast('Produto excluído.')})}";
+const deleteProductReplacement="function delProduct(pid){const p=db.products.find(x=>x.id===pid);if(!p)return;confirmModal('Excluir produto?','O produto '+p.name+' será removido do estoque. O histórico das vendas será preservado.','Excluir produto',async()=>{if(p.imageUrl){try{await deleteProductPhoto(pid)}catch(err){console.warn('Falha ao limpar foto do produto',err)}}db.products=db.products.filter(x=>x.id!==pid);save();render();toast('Produto excluído.')})}";
+if(html.includes(deleteProductNeedle)) html=html.replace(deleteProductNeedle,deleteProductReplacement); else if(!html.includes("console.warn('Falha ao limpar foto do produto'")) throw new Error('Exclusão de produto não encontrada');
+
 const stockStart="<tr><td><b>'+esc(p.name)+'</b><div class=\"code-pill\">";
 const stockStartReplacement="<tr><td><div class=\"product-stock-cell\">'+productPhotoMarkup(p.imageUrl||'',p.name,'product-photo-stock')+'<div class=\"product-stock-copy\"><b>'+esc(p.name)+'</b><div class=\"code-pill\">";
 if(html.includes(stockStart)) html=html.replace(stockStart,stockStartReplacement);
@@ -45,9 +49,9 @@ const topNeedle="top.map(x=>'<div class=\"list-row\"><div class=\"list-row-main\
 const topReplacement="top.map(x=>'<div class=\"list-row premium-product-with-photo\">'+productPhotoMarkup(productImageUrlByName(x[0]),x[0],'dashboard-product-photo')+'<div class=\"list-row-main\"><b>'+esc(x[0])+'</b>";
 if(html.includes(topNeedle)) html=html.replace(topNeedle,topReplacement);
 
-for(const marker of ['function productPhotoMarkup(url,name,extraClass)','function compressProductPhoto(file)','/api/product-image','id="productPhotoInput"','imageUrl};','product-photo-stock','product-photo-sale','dashboard-product-photo']){
+for(const marker of ['function productPhotoMarkup(url,name,extraClass)','function compressProductPhoto(file)','/api/product-image','id="productPhotoInput"','imageUrl};','product-photo-stock','product-photo-sale','dashboard-product-photo',"console.warn('Falha ao limpar foto do produto'"]){
   if(!html.includes(marker)) throw new Error('Patch de fotos incompleto: '+marker);
 }
 
 await writeFile(file,html,'utf8');
-console.log('PRODUCT_IMAGES_PATCH_OK',{bytes:Buffer.byteLength(html)});
+console.log('PRODUCT_IMAGES_PATCH_OK',{bytes:Buffer.byteLength(html),deleteCleanup:true});
