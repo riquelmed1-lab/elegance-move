@@ -38,7 +38,43 @@ html=html
   .replace(/<style id="elegance-premium-critical">[\s\S]*?<\/style>/g,'')
   .replace(/<script id="elegance-premium-runtime">[\s\S]*?<\/script>/g,'');
 
-const safeJs=(js+'\n'+hotfixJs+'\n'+cleanupJs).replace(/<\/script/gi,'<\\/script');
+const saleSummaryContrastFix=`
+(()=>{
+  const FIX_COLOR='#171827';
+  const applySaleSummaryContrast=()=>{
+    document.querySelectorAll('span,div,p,strong').forEach((el)=>{
+      const text=(el.textContent||'').trim();
+      if(text!=='Subtotal'&&text!=='Total') return;
+
+      el.style.setProperty('color',FIX_COLOR,'important');
+      el.style.setProperty('font-weight','700','important');
+
+      const row=el.parentElement;
+      if(!row) return;
+
+      const value=[...row.querySelectorAll('span,div,p,strong')].find((node)=>{
+        if(node===el) return false;
+        const valueText=(node.textContent||'').trim();
+        return /^-?R\\$\\s*[\\d.]+,\\d{2}$/.test(valueText) || /^R\\$\\s*[\\d.]+,\\d{2}$/.test(valueText);
+      });
+
+      if(value){
+        value.style.setProperty('color',FIX_COLOR,'important');
+        value.style.setProperty('font-weight','700','important');
+      }
+    });
+  };
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',applySaleSummaryContrast,{once:true});
+  }else{
+    applySaleSummaryContrast();
+  }
+
+  new MutationObserver(applySaleSummaryContrast).observe(document.documentElement,{childList:true,subtree:true});
+})();`;
+
+const safeJs=(js+'\n'+hotfixJs+'\n'+cleanupJs+'\n'+saleSummaryContrastFix).replace(/<\/script/gi,'<\\/script');
 const styleTag=`<style id="elegance-premium-critical">\n${css}\n${fidelity}\n${hotfixCss}\n${cleanupCss}\n${productImagesCss}\n</style>`;
 const scriptTag=`<script id="elegance-premium-runtime">\n${safeJs}\n</script>`;
 
@@ -56,4 +92,4 @@ if(bodyClose<0) throw new Error('index.html sem </body>');
 html=html.slice(0,bodyClose)+scriptTag+html.slice(bodyClose);
 
 await writeFile(indexPath,html,'utf8');
-console.log('PREMIUM_THEME_INLINE_OK',{cssBytes:Buffer.byteLength(css+fidelity+hotfixCss+cleanupCss+productImagesCss),jsBytes:Buffer.byteLength(js+hotfixJs+cleanupJs),artBytes:Buffer.byteLength(art),indexBytes:Buffer.byteLength(html),realHead:true,cleanup:true,productImages:true});
+console.log('PREMIUM_THEME_INLINE_OK',{cssBytes:Buffer.byteLength(css+fidelity+hotfixCss+cleanupCss+productImagesCss),jsBytes:Buffer.byteLength(js+hotfixJs+cleanupJs+saleSummaryContrastFix),artBytes:Buffer.byteLength(art),indexBytes:Buffer.byteLength(html),realHead:true,cleanup:true,productImages:true,saleSummaryContrast:true});
