@@ -35,6 +35,7 @@ const codeEnd=html.indexOf('</script>',codeStart);
 if(codeEnd<0) throw new Error('Fim do script principal não encontrado');
 const mainCode=html.slice(codeStart,codeEnd);
 for(const marker of ['function render()','function dashboard()','window.showApp=showApp','window.__EM_TEST__']) if(!mainCode.includes(marker)) throw new Error(`Script principal incompleto: ${marker}`);
+for(const marker of ['function nextCommercialNumber(type)','function commercialDisplayNumber(record,type)','orderNo:nextCommercialNumber','quoteNo:nextCommercialNumber','Térmica 80 mm','Pedido:</span><strong>','payment-status paid']) if(!mainCode.includes(marker)) throw new Error(`Documento comercial premium incompleto: ${marker}`);
 new Function(mainCode);
 
 if(!svg.startsWith('<svg')||!svg.includes('viewBox="0 0 520 520"')) throw new Error('Ilustração premium inválida');
@@ -42,4 +43,4 @@ if((html.match(/id="elegance-premium-critical"/g)||[]).length!==1) throw new Err
 if((html.match(/id="elegance-premium-runtime"/g)||[]).length!==1) throw new Error('JS premium inline duplicado');
 if(html.includes('href="/premium-theme.css"')||html.includes('href="/premium-fidelity.css"')||html.includes('href="/premium-cleanup.css"')||html.includes('src="/premium-theme.js"')||html.includes('src="/premium-cleanup.js"')) throw new Error('Build ainda depende de assets premium externos');
 
-console.log('PREMIUM_BUILD_VERIFIED',{htmlBytes:Buffer.byteLength(html),cssBytes:Buffer.byteLength(cssAll),jsBytes:Buffer.byteLength(jsAll),mainScriptBytes:Buffer.byteLength(mainCode),svgBytes:Buffer.byteLength(svg),placement:'safe',cleanup:true});
+console.log('PREMIUM_BUILD_VERIFIED',{htmlBytes:Buffer.byteLength(html),cssBytes:Buffer.byteLength(cssAll),jsBytes:Buffer.byteLength(jsAll),mainScriptBytes:Buffer.byteLength(mainCode),svgBytes:Buffer.byteLength(svg),placement:'safe',cleanup:true,commercialDocument:true});
