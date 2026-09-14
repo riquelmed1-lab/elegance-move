@@ -1,0 +1,84 @@
+/* ELEGANCE_MOVE_MOBILE_POLISH_V1 */
+@media(max-width:760px){
+  /* Global rhythm */
+  .content.premium-dashboard,#content.premium-dashboard{padding-top:14px!important}
+  .content.premium-dashboard .page-head,#content.premium-dashboard .page-head{gap:4px!important;margin-bottom:14px!important}
+  .content.premium-dashboard .page-head h1,#content.premium-dashboard .page-head h1{font-size:27px!important;line-height:1!important;letter-spacing:-.04em!important;margin:0!important}
+  .content.premium-dashboard .page-head p,#content.premium-dashboard .page-head p{font-size:10.5px!important;line-height:1.45!important;margin:2px 0 0!important}
+
+  /* KPI cards: cleaner hierarchy and consistent alignment */
+  #content.premium-dashboard .kpi-grid,.content.premium-dashboard .kpi-grid{gap:10px!important}
+  #content.premium-dashboard .kpi-grid>.metric,.content.premium-dashboard .kpi-grid>.metric{height:108px!important;min-height:108px!important;max-height:108px!important;padding:14px 12px 12px 50px!important;border-radius:16px!important}
+  #content.premium-dashboard .kpi-grid>.metric .premium-metric-icon,.content.premium-dashboard .kpi-grid>.metric .premium-metric-icon{left:11px!important;top:13px!important;width:31px!important;height:31px!important;border-radius:10px!important}
+  #content.premium-dashboard .kpi-grid>.metric small,.content.premium-dashboard .kpi-grid>.metric small{font-size:8.4px!important;line-height:1.25!important;min-height:20px!important;display:flex!important;align-items:flex-start!important}
+  #content.premium-dashboard .kpi-grid>.metric strong,.content.premium-dashboard .kpi-grid>.metric strong{font-size:20px!important;line-height:1!important;margin-top:3px!important;white-space:nowrap!important}
+  #content.premium-dashboard .kpi-grid>.metric em,.content.premium-dashboard .kpi-grid>.metric em{font-size:7.8px!important;line-height:1.35!important;margin-top:7px!important;display:block!important}
+
+  /* Main chart: reduce dead space on phone */
+  #content.premium-dashboard .chart-panel,.content.premium-dashboard .chart-panel{min-height:238px!important;padding:14px 14px 10px!important;border-radius:16px!important}
+  #content.premium-dashboard .chart-head,.content.premium-dashboard .chart-head{gap:8px!important;margin-bottom:6px!important}
+  #content.premium-dashboard .chart-head h2,.content.premium-dashboard .chart-head h2{font-size:14.5px!important;line-height:1.25!important}
+  #content.premium-dashboard .chart-actions,.content.premium-dashboard .chart-actions{width:100%!important}
+  #content.premium-dashboard .range-switch,.content.premium-dashboard .range-switch{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;width:100%!important;overflow:hidden!important;padding:3px!important}
+  #content.premium-dashboard .range-switch button,.content.premium-dashboard .range-switch button{min-width:0!important;padding:7px 3px!important;font-size:7.8px!important;white-space:nowrap!important}
+  #content.premium-dashboard .line-chart,.content.premium-dashboard .line-chart{height:150px!important;margin-top:6px!important}
+
+  /* Secondary KPIs */
+  #content.premium-dashboard .premium-kpi-secondary,.content.premium-dashboard .premium-kpi-secondary{gap:10px!important;margin-top:10px!important}
+  #content.premium-dashboard .premium-kpi-secondary>.metric,.content.premium-dashboard .premium-kpi-secondary>.metric{height:82px!important;min-height:82px!important;max-height:82px!important;padding:12px 10px 10px 45px!important;border-radius:15px!important}
+  #content.premium-dashboard .premium-kpi-secondary .premium-metric-icon,.content.premium-dashboard .premium-kpi-secondary .premium-metric-icon{left:10px!important;top:12px!important;width:27px!important;height:27px!important}
+  #content.premium-dashboard .premium-kpi-secondary .metric small,.content.premium-dashboard .premium-kpi-secondary .metric small{font-size:8px!important;line-height:1.2!important}
+  #content.premium-dashboard .premium-kpi-secondary .metric strong,.content.premium-dashboard .premium-kpi-secondary .metric strong{font-size:16px!important;line-height:1!important;margin-top:5px!important}
+
+  /* Lower dashboard cards */
+  #content.premium-dashboard .dashboard-lower,.content.premium-dashboard .dashboard-lower{gap:10px!important;margin-top:10px!important}
+  #content.premium-dashboard .dashboard-lower>.card,.content.premium-dashboard .dashboard-lower>.card{min-height:0!important;border-radius:16px!important;padding:14px!important}
+  #content.premium-dashboard .panel-head,.content.premium-dashboard .panel-head{margin-bottom:8px!important;align-items:center!important}
+  #content.premium-dashboard .panel-head h2,.content.premium-dashboard .panel-head h2{font-size:13.5px!important;line-height:1.2!important}
+  #content.premium-dashboard .panel-head .btn,.content.premium-dashboard .panel-head .btn{min-height:26px!important;padding:5px 8px!important;font-size:7.2px!important;border-radius:8px!important}
+
+  /* Category card: compact visual instead of a tall empty card */
+  #content.premium-dashboard .premium-lower-1,.content.premium-dashboard .premium-lower-1{min-height:150px!important}
+  #content.premium-dashboard .premium-lower-1 .premium-donut-layout,.content.premium-dashboard .premium-lower-1 .premium-donut-layout{grid-template-columns:88px minmax(0,1fr)!important;gap:14px!important;padding-top:2px!important;align-items:center!important}
+  #content.premium-dashboard .premium-lower-1 .premium-donut,.content.premium-dashboard .premium-lower-1 .premium-donut{width:84px!important;height:84px!important}
+  #content.premium-dashboard .premium-lower-1 .premium-donut:before,.content.premium-dashboard .premium-lower-1 .premium-donut:before{width:52px!important;height:52px!important}
+  #content.premium-dashboard .premium-lower-1 .premium-donut small,.content.premium-dashboard .premium-lower-1 .premium-donut small{font-size:7px!important}
+  #content.premium-dashboard .premium-lower-1 .premium-donut b,.content.premium-dashboard .premium-lower-1 .premium-donut b{font-size:10.5px!important}
+  #content.premium-dashboard .premium-lower-1 .premium-donut-legend,.content.premium-dashboard .premium-lower-1 .premium-donut-legend{gap:6px!important}
+  #content.premium-dashboard .premium-lower-1 .premium-donut-legend>div,.content.premium-dashboard .premium-lower-1 .premium-donut-legend>div{font-size:8px!important}
+
+  /* Top clients */
+  #content.premium-dashboard .premium-lower-2 .list-row,.content.premium-dashboard .premium-lower-2 .list-row{padding:10px 0!important;gap:8px!important}
+  #content.premium-dashboard .premium-lower-2 .premium-rank,.content.premium-dashboard .premium-lower-2 .premium-rank{width:24px!important;height:24px!important;min-width:24px!important;flex-basis:24px!important;font-size:8px!important}
+  #content.premium-dashboard .premium-lower-2 .list-row-main,.content.premium-dashboard .premium-lower-2 .list-row-main{grid-template-columns:32px minmax(0,1fr)!important;column-gap:8px!important}
+  #content.premium-dashboard .premium-lower-2 .premium-client-avatar,.content.premium-dashboard .premium-lower-2 .premium-client-avatar{width:32px!important;height:32px!important;min-width:32px!important}
+  #content.premium-dashboard .premium-lower-2 .list-row-main b,.content.premium-dashboard .premium-lower-2 .list-row-main b{font-size:10.5px!important}
+  #content.premium-dashboard .premium-lower-2 .list-row-main span,.content.premium-dashboard .premium-lower-2 .list-row-main span{font-size:7.8px!important}
+  #content.premium-dashboard .premium-lower-2 .list-row-value,.content.premium-dashboard .premium-lower-2 .list-row-value{font-size:10px!important;font-weight:800!important}
+
+  /* Best sellers */
+  #content.premium-dashboard .premium-lower-3 .list-row,.content.premium-dashboard .premium-lower-3 .list-row{grid-template-columns:42px minmax(0,1fr) auto!important;gap:10px!important;padding:10px 0!important}
+  #content.premium-dashboard .premium-lower-3 .product-photo,.content.premium-dashboard .premium-lower-3 .product-photo,#content.premium-dashboard .premium-lower-3 .premium-product-thumb,.content.premium-dashboard .premium-lower-3 .premium-product-thumb{width:42px!important;height:46px!important;min-width:42px!important;border-radius:10px!important}
+  #content.premium-dashboard .premium-lower-3 .list-row-main b,.content.premium-dashboard .premium-lower-3 .list-row-main b{font-size:10px!important;line-height:1.2!important}
+  #content.premium-dashboard .premium-lower-3 .list-row-main span,.content.premium-dashboard .premium-lower-3 .list-row-main span{font-size:7.8px!important;line-height:1.3!important}
+  #content.premium-dashboard .premium-lower-3 .list-row-value,.content.premium-dashboard .premium-lower-3 .list-row-value{font-size:9.5px!important;font-weight:800!important}
+
+  /* Receivables and low stock */
+  #content.premium-dashboard .premium-lower-4 .list-row,#content.premium-dashboard .premium-lower-5 .list-row,.content.premium-dashboard .premium-lower-4 .list-row,.content.premium-dashboard .premium-lower-5 .list-row{padding:9px 0!important}
+  #content.premium-dashboard .premium-lower-4 .list-row-main b,#content.premium-dashboard .premium-lower-5 .list-row-main b,.content.premium-dashboard .premium-lower-4 .list-row-main b,.content.premium-dashboard .premium-lower-5 .list-row-main b{font-size:9.5px!important;line-height:1.25!important}
+  #content.premium-dashboard .premium-lower-4 .list-row-main span,#content.premium-dashboard .premium-lower-5 .list-row-main span,.content.premium-dashboard .premium-lower-4 .list-row-main span,.content.premium-dashboard .premium-lower-5 .list-row-main span{font-size:7.6px!important;line-height:1.35!important}
+  #content.premium-dashboard .premium-lower-4 .list-row-value,#content.premium-dashboard .premium-lower-5 .list-row-value,.content.premium-dashboard .premium-lower-4 .list-row-value,.content.premium-dashboard .premium-lower-5 .list-row-value{font-size:9.5px!important;font-weight:800!important}
+  #content.premium-dashboard .premium-lower-5 .btn,.content.premium-dashboard .premium-lower-5 .btn{margin-top:10px!important}
+
+  /* Bottom nav slightly quieter so content remains the protagonist */
+  #emMobileDock{left:7px!important;right:7px!important;padding:5px!important;border-radius:18px!important}
+  #emMobileDock button{height:52px!important;font-size:7.6px!important;gap:3px!important}
+  #emMobileDock button svg{width:19px!important;height:19px!important}
+}
+
+@media(max-width:430px){
+  #content.premium-dashboard .kpi-grid>.metric,.content.premium-dashboard .kpi-grid>.metric{height:104px!important;min-height:104px!important;max-height:104px!important;padding-right:9px!important}
+  #content.premium-dashboard .kpi-grid>.metric strong,.content.premium-dashboard .kpi-grid>.metric strong{font-size:18px!important}
+  #content.premium-dashboard .premium-lower-1 .premium-donut-layout,.content.premium-dashboard .premium-lower-1 .premium-donut-layout{grid-template-columns:80px minmax(0,1fr)!important;gap:10px!important}
+  #content.premium-dashboard .premium-lower-1 .premium-donut,.content.premium-dashboard .premium-lower-1 .premium-donut{width:78px!important;height:78px!important}
+}
