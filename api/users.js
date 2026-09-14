@@ -9,6 +9,10 @@ async function listUsers(token){
   return (Array.isArray(r.data)?r.data:[]).map(mapUser);
 }
 
+async function rpc(token,name,body){
+  return sb(`/rest/v1/rpc/${name}`,{method:'POST',token,body,headers:{Prefer:'return=representation'}});
+}
+
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   try{
@@ -28,7 +32,9 @@ export default async function handler(req,res){
       const id=created.data.user.id;
       const patch=await sb(`/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',token:session.access,body:{full_name:name,email,role,active:true,updated_at:new Date().toISOString()},headers:{Prefer:'return=minimal'}});
       if(!patch.response.ok) return json(res,500,{error:'Could not configure user'});
-      return json(res,200,{ok:true,user:{id,name,email,role,active:true},requiresEmailConfirmation:!created.data.access_token});
+      const confirmed=await rpc(session.access,'admin_confirm_user',{target_user_id:id});
+      if(!confirmed.response.ok) return json(res,500,{error:'Could not activate user'});
+      return json(res,200,{ok:true,user:{id,name,email,role,active:true},requiresEmailConfirmation:false});
     }
 
     if(action==='update'){
@@ -45,7 +51,19 @@ export default async function handler(req,res){
       return json(res,200,{ok:true});
     }
 
-    if(action==='reset-password') return json(res,501,{error:'Password reset requires Supabase admin service'});
+    if(action==='reset-password'){
+      const id=String(body.id||''),password=String(body.password||body.newPassword||'');
+      if(!id||password.length<8) return json(res,400,{error:'Password must have at least 8 characters'});
+      const current=await listUsers(session.access),target=current.find(u=>u.id===id);
+      if(!target) return json(res,404,{error:'User not found'});
+      const reset=await rpc(session.access,'admin_reset_user_password',{target_user_id:id,new_password:password});
+      if(!reset.response.ok) {
+        console.error('password reset rpc failed',reset.data);
+        return json(res,500,{error:'Could not reset password'});
+      }
+      return json(res,200,{ok:true});
+    }
+
     return json(res,400,{error:'Invalid action'});
   }catch(error){console.error('users error',error);return json(res,500,{error:'User management failed'});}
 }
