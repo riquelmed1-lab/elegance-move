@@ -74,6 +74,92 @@
   #emMobileDock{left:7px!important;right:7px!important;padding:5px!important;border-radius:18px!important}
   #emMobileDock button{height:52px!important;font-size:7.6px!important;gap:3px!important}
   #emMobileDock button svg{width:19px!important;height:19px!important}
+
+  /* TOP CLIENTS ALIGNMENT V2 — rank | avatar | copy | amount */
+  #content.premium-dashboard .premium-lower-2 .list-row,
+  .content.premium-dashboard .premium-lower-2 .list-row{
+    display:grid!important;
+    grid-template-columns:28px 38px minmax(0,1fr) auto!important;
+    column-gap:10px!important;
+    row-gap:0!important;
+    align-items:center!important;
+    min-width:0!important;
+    padding:13px 0!important;
+  }
+  #content.premium-dashboard .premium-lower-2 .premium-rank,
+  .content.premium-dashboard .premium-lower-2 .premium-rank{
+    grid-column:1!important;
+    grid-row:1!important;
+    width:26px!important;
+    height:26px!important;
+    min-width:26px!important;
+    margin:0!important;
+    justify-self:start!important;
+  }
+  #content.premium-dashboard .premium-lower-2 .list-row-main,
+  .content.premium-dashboard .premium-lower-2 .list-row-main{
+    grid-column:2 / 4!important;
+    grid-row:1!important;
+    display:grid!important;
+    grid-template-columns:38px minmax(0,1fr)!important;
+    grid-template-rows:auto auto!important;
+    column-gap:10px!important;
+    row-gap:2px!important;
+    align-items:center!important;
+    min-width:0!important;
+    width:100%!important;
+  }
+  #content.premium-dashboard .premium-lower-2 .premium-client-avatar,
+  .content.premium-dashboard .premium-lower-2 .premium-client-avatar{
+    grid-column:1!important;
+    grid-row:1 / 3!important;
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    margin:0!important;
+    float:none!important;
+    align-self:center!important;
+    justify-self:start!important;
+  }
+  #content.premium-dashboard .premium-lower-2 .list-row-main b,
+  .content.premium-dashboard .premium-lower-2 .list-row-main b{
+    grid-column:2!important;
+    grid-row:1!important;
+    margin:0!important;
+    padding:0!important;
+    font-size:11.5px!important;
+    line-height:1.2!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    align-self:end!important;
+  }
+  #content.premium-dashboard .premium-lower-2 .list-row-main span:not(.premium-client-avatar),
+  .content.premium-dashboard .premium-lower-2 .list-row-main span:not(.premium-client-avatar){
+    grid-column:2!important;
+    grid-row:2!important;
+    margin:0!important;
+    padding:0!important;
+    font-size:8.6px!important;
+    line-height:1.3!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    align-self:start!important;
+    color:#97857f!important;
+  }
+  #content.premium-dashboard .premium-lower-2 .list-row-value,
+  .content.premium-dashboard .premium-lower-2 .list-row-value{
+    grid-column:4!important;
+    grid-row:1!important;
+    justify-self:end!important;
+    align-self:center!important;
+    margin:0!important;
+    white-space:nowrap!important;
+    font-size:11px!important;
+    font-weight:800!important;
+    color:#463835!important;
+  }
 }
 
 @media(max-width:430px){
@@ -81,4 +167,16 @@
   #content.premium-dashboard .kpi-grid>.metric strong,.content.premium-dashboard .kpi-grid>.metric strong{font-size:18px!important}
   #content.premium-dashboard .premium-lower-1 .premium-donut-layout,.content.premium-dashboard .premium-lower-1 .premium-donut-layout{grid-template-columns:80px minmax(0,1fr)!important;gap:10px!important}
   #content.premium-dashboard .premium-lower-1 .premium-donut,.content.premium-dashboard .premium-lower-1 .premium-donut{width:78px!important;height:78px!important}
+
+  /* Keep top clients readable even on narrow iPhones */
+  #content.premium-dashboard .premium-lower-2 .list-row,
+  .content.premium-dashboard .premium-lower-2 .list-row{grid-template-columns:26px 36px minmax(0,1fr) auto!important;column-gap:8px!important}
+  #content.premium-dashboard .premium-lower-2 .list-row-main,
+  .content.premium-dashboard .premium-lower-2 .list-row-main{grid-template-columns:36px minmax(0,1fr)!important;column-gap:8px!important}
+  #content.premium-dashboard .premium-lower-2 .premium-client-avatar,
+  .content.premium-dashboard .premium-lower-2 .premium-client-avatar{width:36px!important;height:36px!important;min-width:36px!important}
+  #content.premium-dashboard .premium-lower-2 .list-row-main b,
+  .content.premium-dashboard .premium-lower-2 .list-row-main b{font-size:11px!important}
+  #content.premium-dashboard .premium-lower-2 .list-row-value,
+  .content.premium-dashboard .premium-lower-2 .list-row-value{font-size:10.5px!important}
 }
