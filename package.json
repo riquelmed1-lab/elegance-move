@@ -7,6 +7,6 @@
     "@netlify/functions": "latest"
   },
   "scripts": {
-    "build": "node build.mjs && node patch-entry-delete.mjs && node patch-dashboard-entry-sync.mjs && node patch-monthly-profit.mjs && node patch-premium-commercial-doc.mjs && node patch-remove-quote-condition.mjs && node patch-product-images.mjs && node patch-commercial-product-images.mjs && node patch-cloud-status-copy.mjs && node inject-users-ui.mjs && node inject-password-recovery.mjs && node generate-supabase-config.mjs && node inject-premium-theme.mjs && node inject-mobile-app.mjs && node patch-pwa.mjs && node verify-premium-build.mjs"
+    "build": "node build.mjs && node patch-entry-delete.mjs && node patch-dashboard-entry-sync.mjs && node patch-monthly-profit.mjs && node patch-premium-commercial-doc.mjs && node patch-remove-quote-condition.mjs && node patch-product-images.mjs && node patch-commercial-product-images.mjs && node patch-cloud-status-copy.mjs && node inject-users-ui.mjs && node inject-password-recovery.mjs && node generate-supabase-config.mjs && node inject-premium-theme.mjs && node inject-mobile-app.mjs && node patch-pwa.mjs && node verify-premium-build.mjs && node prepare-pwa-icon-v7.mjs"
   }
 }
