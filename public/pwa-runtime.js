@@ -81,7 +81,7 @@
     if(!document.getElementById('emPwaBanner')){
       const banner=document.createElement('div');
       banner.id='emPwaBanner';
-      banner.innerHTML=`<div class="em-pwa-icon"><img src="/pwa-icon.svg" alt=""></div><div class="em-pwa-copy"><b>Instale o Elegance Move</b><span>Acesso mais rápido, tela cheia e experiência de aplicativo.</span></div><div class="em-pwa-actions"><button type="button" data-em-pwa-install>Instalar</button><button type="button" data-em-pwa-dismiss aria-label="Agora não">×</button></div>`;
+      banner.innerHTML=`<div class="em-pwa-icon"><img src="/pwa-icon.png" alt=""></div><div class="em-pwa-copy"><b>Instale o Elegance Move</b><span>Acesso mais rápido, tela cheia e experiência de aplicativo.</span></div><div class="em-pwa-actions"><button type="button" data-em-pwa-install>Instalar</button><button type="button" data-em-pwa-dismiss aria-label="Agora não">×</button></div>`;
       document.body.appendChild(banner);
       banner.querySelector('[data-em-pwa-install]').onclick=()=>openInstall();
       banner.querySelector('[data-em-pwa-dismiss]').onclick=()=>dismissBanner();
@@ -111,11 +111,11 @@
   }
 
   function iosMarkup(){
-    return `<div class="em-pwa-sheet-card"><div class="em-pwa-handle"></div><div class="em-pwa-title"><img src="/pwa-icon.svg" alt=""><div><h3>Instalar Elegance Move</h3><p>No iPhone, a instalação é feita pelo Safari.</p></div></div><div class="em-pwa-steps"><div class="em-pwa-step"><strong>1</strong><div><b>Abra no Safari</b><span>Se estiver no WhatsApp ou outro navegador, abra esta página no Safari.</span></div></div><div class="em-pwa-step"><strong>2</strong><div><b>Toque em Compartilhar</b><span>Use o ícone de compartilhamento na barra do Safari.</span></div></div><div class="em-pwa-step"><strong>3</strong><div><b>Adicionar à Tela de Início</b><span>Confirme o nome “Elegance Move” e toque em Adicionar.</span></div></div></div><div class="em-pwa-sheet-actions"><button class="em-pwa-primary" type="button" data-em-pwa-ok>Entendi</button></div></div>`;
+    return `<div class="em-pwa-sheet-card"><div class="em-pwa-handle"></div><div class="em-pwa-title"><img src="/pwa-icon.png" alt=""><div><h3>Instalar Elegance Move</h3><p>No iPhone, a instalação é feita pelo Safari.</p></div></div><div class="em-pwa-steps"><div class="em-pwa-step"><strong>1</strong><div><b>Abra no Safari</b><span>Se estiver no WhatsApp ou outro navegador, abra esta página no Safari.</span></div></div><div class="em-pwa-step"><strong>2</strong><div><b>Toque em Compartilhar</b><span>Use o ícone de compartilhamento na barra do Safari.</span></div></div><div class="em-pwa-step"><strong>3</strong><div><b>Adicionar à Tela de Início</b><span>Confirme o nome “Elegance Move” e toque em Adicionar.</span></div></div></div><div class="em-pwa-sheet-actions"><button class="em-pwa-primary" type="button" data-em-pwa-ok>Entendi</button></div></div>`;
   }
 
   function genericMarkup(){
-    return `<div class="em-pwa-sheet-card"><div class="em-pwa-handle"></div><div class="em-pwa-title"><img src="/pwa-icon.svg" alt=""><div><h3>Instalar Elegance Move</h3><p>Use como aplicativo, com acesso direto pela tela inicial.</p></div></div><div class="em-pwa-steps"><div class="em-pwa-step"><strong>✓</strong><div><b>Acesso rápido</b><span>Abra o sistema direto pelo ícone do celular.</span></div></div><div class="em-pwa-step"><strong>✓</strong><div><b>Tela cheia</b><span>Mais espaço para vendas, clientes e estoque.</span></div></div></div><div class="em-pwa-sheet-actions"><button class="em-pwa-primary" type="button" data-em-pwa-confirm>Instalar aplicativo</button><button class="em-pwa-secondary" type="button" data-em-pwa-cancel>Agora não</button></div></div>`;
+    return `<div class="em-pwa-sheet-card"><div class="em-pwa-handle"></div><div class="em-pwa-title"><img src="/pwa-icon.png" alt=""><div><h3>Instalar Elegance Move</h3><p>Use como aplicativo, com acesso direto pela tela inicial.</p></div></div><div class="em-pwa-steps"><div class="em-pwa-step"><strong>✓</strong><div><b>Acesso rápido</b><span>Abra o sistema direto pelo ícone do celular.</span></div></div><div class="em-pwa-step"><strong>✓</strong><div><b>Tela cheia</b><span>Mais espaço para vendas, clientes e estoque.</span></div></div></div><div class="em-pwa-sheet-actions"><button class="em-pwa-primary" type="button" data-em-pwa-confirm>Instalar aplicativo</button><button class="em-pwa-secondary" type="button" data-em-pwa-cancel>Agora não</button></div></div>`;
   }
 
   async function promptInstall(){
