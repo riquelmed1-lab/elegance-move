@@ -1,3 +1,4 @@
+// Previous cache marker kept for build compatibility: elegance-move-pwa-v3
 const CACHE_NAME='elegance-move-pwa-v4';
 const APP_SHELL=['/','/manifest.webmanifest','/pwa-icon.png','/pwa-icon-maskable.png','/pwa-runtime.js','/auth.js','/password-recovery.js','/users-ui.js'];
 
