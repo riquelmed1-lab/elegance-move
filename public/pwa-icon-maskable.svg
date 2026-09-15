@@ -1,7 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#8f5d50"/>
-  <circle cx="256" cy="256" r="166" fill="#fffaf8"/>
-  <circle cx="256" cy="256" r="132" fill="#f4ddd6"/>
-  <path d="M172 164h171v32H209v44h119v31H209v45h139v32H172V164Z" fill="#8f5d50"/>
-  <path d="M306 164h37v184h-37z" fill="#b77a69" opacity=".9"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a56f61"/>
+      <stop offset="1" stop-color="#7d4d43"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="180" fill="#fffaf8"/>
+  <circle cx="256" cy="256" r="148" fill="#f3ddd6"/>
+  <path d="M168 177h112c41 0 68 22 68 56 0 21-10 38-29 48 24 9 37 27 37 51 0 39-31 63-77 63H168V177Zm43 36v52h65c18 0 29-10 29-26 0-17-12-26-31-26h-63Zm0 87v59h70c21 0 32-11 32-29 0-19-13-30-36-30h-66Z" fill="#8f5d50"/>
+  <path d="M243 218h20l35 76 35-76h20v136h-31v-74l-24 51h-1l-24-51v74h-30V218Z" fill="#b77968" opacity=".92"/>
 </svg>
