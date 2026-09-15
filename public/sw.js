@@ -1,5 +1,5 @@
-const CACHE_NAME='elegance-move-pwa-v1';
-const APP_SHELL=['/','/manifest.webmanifest','/pwa-icon.svg','/pwa-icon-maskable.svg','/auth.js','/password-recovery.js','/users-ui.js'];
+const CACHE_NAME='elegance-move-pwa-v2';
+const APP_SHELL=['/','/manifest.webmanifest','/pwa-icon.svg','/pwa-icon-maskable.svg','/pwa-runtime.js','/auth.js','/password-recovery.js','/users-ui.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)).catch(()=>{}));
