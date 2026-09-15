@@ -1,8 +1,16 @@
-# Elegance Move Cloud
+# Elegance Move
 
-Deploy via Git-connected Netlify project (not drag/drop static deploy) so Netlify builds Functions and Database migrations.
+Sistema de gestão da Elegance Move publicado na Vercel, com dados e autenticação no Supabase.
 
-- Site: public/index.html
-- Function: netlify/functions/state.mts
-- Database migration: netlify/database/migrations/001_initial_schema/migration.sql
-- API: /api/state (also backed by _redirects fallback)
+## Arquitetura atual
+
+- Deploy: Vercel
+- Banco e autenticação: Supabase
+- Front-end gerado em: `public/index.html`
+- APIs: `/api/auth`, `/api/state`, `/api/users`, `/api/product-image`
+- Mobile: interface responsiva com navegação inferior
+- PWA: manifest, service worker, ícone e modo standalone
+
+## PWA
+
+A aplicação pode ser instalada no celular e aberta em modo standalone, sem a interface do navegador. O build injeta as metatags PWA e registra o service worker automaticamente através de `patch-pwa.mjs` e `public/pwa-runtime.js`.
