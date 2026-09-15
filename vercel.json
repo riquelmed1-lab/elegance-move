@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build && node patch-approved-pwa-icon.mjs",
+  "buildCommand": "npm run build && cp public/pwa-icon.png public/elegance-move-icon-v7.png && sed -i 's#/pwa-icon.png?v=5#/elegance-move-icon-v7.png#g; s#/pwa-icon.png#/elegance-move-icon-v7.png#g; s#manifest.webmanifest?v=5#manifest.webmanifest?v=7#g' public/index.html && sed -i 's#/pwa-icon.png?v=5#/elegance-move-icon-v7.png#g; s#/pwa-icon.png#/elegance-move-icon-v7.png#g' public/manifest.webmanifest && sed -i 's#/pwa-icon.png#/elegance-move-icon-v7.png#g' public/pwa-runtime.js && sed -i 's#elegance-move-pwa-v4#elegance-move-pwa-v7#g; s#/pwa-icon.png#/elegance-move-icon-v7.png#g' public/sw.js",
   "outputDirectory": "public",
   "cleanUrls": true
 }
