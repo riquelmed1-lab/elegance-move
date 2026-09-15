@@ -1,7 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#f4ddd6"/>
-  <rect x="54" y="54" width="404" height="404" rx="96" fill="#fffaf8" stroke="#d9b8ad" stroke-width="10"/>
-  <circle cx="256" cy="256" r="132" fill="#8f5d50"/>
-  <path d="M175 164h170v32H211v44h118v31H211v45h138v32H175V164Z" fill="#fffaf8"/>
-  <path d="M307 164h38v184h-38z" fill="#f4ddd6" opacity=".95"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbf5f2"/>
+      <stop offset="1" stop-color="#efd8d1"/>
+    </linearGradient>
+    <linearGradient id="rose" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a56f61"/>
+      <stop offset="1" stop-color="#7d4d43"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="118" fill="url(#bg)"/>
+  <rect x="42" y="42" width="428" height="428" rx="104" fill="#fffaf8" stroke="#e5c9c0" stroke-width="8"/>
+  <circle cx="256" cy="246" r="138" fill="url(#rose)"/>
+  <path d="M170 165h112c41 0 68 22 68 56 0 21-10 38-29 48 24 9 37 27 37 51 0 39-31 63-77 63H170V165Zm43 36v52h65c18 0 29-10 29-26 0-17-12-26-31-26h-63Zm0 87v59h70c21 0 32-11 32-29 0-19-13-30-36-30h-66Z" fill="#fffaf8" opacity=".98"/>
+  <path d="M245 206h20l35 76 35-76h20v136h-31v-74l-24 51h-1l-24-51v74h-30V206Z" fill="#f5ded7" opacity=".95"/>
+  <circle cx="256" cy="418" r="5" fill="#b98272"/>
 </svg>
