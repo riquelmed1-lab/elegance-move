@@ -10,8 +10,8 @@ const headTags=`
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Elegance Move">
-<link rel="icon" href="/pwa-icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/pwa-icon.svg">
+<link rel="icon" href="/pwa-icon.png" type="image/png">
+<link rel="apple-touch-icon" href="/pwa-icon.png">
 <style id="elegance-pwa-launch">
 #emPwaSplash{display:none}
 @media (display-mode:standalone){
@@ -36,7 +36,7 @@ html=html
   .replace(/<meta name="apple-mobile-web-app-capable"[^>]*>\s*/g,'')
   .replace(/<meta name="apple-mobile-web-app-status-bar-style"[^>]*>\s*/g,'')
   .replace(/<meta name="apple-mobile-web-app-title"[^>]*>\s*/g,'')
-  .replace(/<link rel="icon" href="\/pwa-icon\.svg"[^>]*>\s*/g,'')
+  .replace(/<link rel="icon" href="\/pwa-icon\.(?:svg|png)"[^>]*>\s*/g,'')
   .replace(/<link rel="apple-touch-icon"[^>]*>\s*/g,'')
   .replace(/<style id="elegance-pwa-launch">[\s\S]*?<\/style>\s*/g,'')
   .replace(/<script src="\/pwa-runtime\.js"><\/script>\s*/g,'')
@@ -50,18 +50,18 @@ html=html.slice(0,headClose)+headTags+html.slice(headClose);
 
 const bodyStart=html.indexOf('>',bodyOpen)+1;
 if(bodyStart<=bodyOpen) throw new Error('index.html com <body> inválido');
-const splash=`<div id="emPwaSplash" aria-hidden="true"><div class="em-splash-inner"><img class="em-splash-icon" src="/pwa-icon.svg" alt=""><div class="em-splash-name">Elegance Move</div><div class="em-splash-tag">Gestão inteligente da sua loja</div><div class="em-splash-loader"></div></div></div>`;
+const splash=`<div id="emPwaSplash" aria-hidden="true"><div class="em-splash-inner"><img class="em-splash-icon" src="/pwa-icon.png" alt=""><div class="em-splash-name">Elegance Move</div><div class="em-splash-tag">Gestão inteligente da sua loja</div><div class="em-splash-loader"></div></div></div>`;
 html=html.slice(0,bodyStart)+splash+html.slice(bodyStart);
 
 const bodyClose=html.lastIndexOf('</body>');
 if(bodyClose<0) throw new Error('index.html sem </body>');
 html=html.slice(0,bodyClose)+'<script src="/pwa-runtime.js"></script>'+html.slice(bodyClose);
 
-for(const marker of ['manifest.webmanifest','apple-mobile-web-app-capable','pwa-runtime.js','theme-color','emPwaSplash','elegance-pwa-launch']){
+for(const marker of ['manifest.webmanifest','apple-mobile-web-app-capable','pwa-runtime.js','theme-color','emPwaSplash','elegance-pwa-launch','/pwa-icon.png']){
   if(!html.includes(marker)) throw new Error(`PWA incompleto: ${marker}`);
 }
 const realHeadClose=html.lastIndexOf('</head>',html.indexOf('<body'));
 const pwaStyleIndex=html.indexOf('id="elegance-pwa-launch"');
 if(realHeadClose<0||pwaStyleIndex<0||pwaStyleIndex>realHeadClose) throw new Error('PWA foi injetado fora do <head> real');
 await writeFile(indexPath,html,'utf8');
-console.log('PWA_PATCH_OK',{indexBytes:Buffer.byteLength(html),splash:true,placement:'safe'});
+console.log('PWA_PATCH_OK',{indexBytes:Buffer.byteLength(html),splash:true,placement:'safe',icon:'png'});
