@@ -29,8 +29,12 @@
   function fillMore(){
     ensureMore();const grid=document.querySelector('#emMobileMore .em-mobile-grid');if(!grid)return;
     const extra=navButtons().filter(b=>!core.includes(b.dataset.page));
-    grid.innerHTML=extra.map(b=>`<button type="button" data-em-extra="${b.dataset.page}">${titleOf(b)}</button>`).join('')||'<div style="padding:12px;font-size:11px;color:#8d7a74">Sem outras opções disponíveis.</div>';
+    let html=extra.map(b=>`<button type="button" data-em-extra="${b.dataset.page}">${titleOf(b)}</button>`).join('');
+    const canInstall=typeof window.__EM_PWA_CAN_INSTALL__==='function'&&window.__EM_PWA_CAN_INSTALL__();
+    if(canInstall) html+=`<button type="button" data-em-install-app style="background:#f6e8e3;border-color:#e5cfc7;color:#744d43;font-weight:800">Instalar aplicativo</button>`;
+    grid.innerHTML=html||'<div style="padding:12px;font-size:11px;color:#8d7a74">Sem outras opções disponíveis.</div>';
     grid.querySelectorAll('[data-em-extra]').forEach(b=>b.onclick=()=>go(b.dataset.emExtra));
+    grid.querySelector('[data-em-install-app]')?.addEventListener('click',()=>{closeMore();window.__EM_PWA_OPEN_INSTALL__?.();});
   }
   function openMore(){fillMore();document.getElementById('emMobileMore')?.classList.add('open')}
   function closeMore(){document.getElementById('emMobileMore')?.classList.remove('open')}
