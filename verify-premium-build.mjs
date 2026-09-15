@@ -1,13 +1,13 @@
 import { readFile, access } from 'node:fs/promises';
 
-const requiredFiles=['public/index.html','public/premium-theme.css','public/premium-fidelity.css','public/premium-hotfix.css','public/premium-cleanup.css','public/product-images.css','public/mobile-app.css','public/mobile-polish.css','public/premium-theme.js','public/premium-hotfix.js','public/premium-cleanup.js','public/mobile-app.js','public/premium-fashion.svg','public/auth.js','public/password-recovery.js','public/users-ui.js','api/product-image.js'];
+const requiredFiles=['public/index.html','public/premium-theme.css','public/premium-fidelity.css','public/premium-hotfix.css','public/premium-cleanup.css','public/product-images.css','public/mobile-app.css','public/mobile-polish.css','public/premium-theme.js','public/premium-hotfix.js','public/premium-cleanup.js','public/mobile-app.js','public/premium-fashion.svg','public/auth.js','public/password-recovery.js','public/users-ui.js','public/manifest.webmanifest','public/pwa-icon.svg','public/pwa-icon-maskable.svg','public/pwa-runtime.js','public/sw.js','api/product-image.js'];
 for(const file of requiredFiles) await access(file);
 
-const [html,baseCss,fidelity,hotfixCss,cleanupCss,productImagesCss,mobileCss,mobilePolish,js,hotfixJs,cleanupJs,mobileJs,svg,authJs,passwordJs,usersJs,productImageApi]=await Promise.all([
-  readFile('public/index.html','utf8'),readFile('public/premium-theme.css','utf8'),readFile('public/premium-fidelity.css','utf8'),readFile('public/premium-hotfix.css','utf8'),readFile('public/premium-cleanup.css','utf8'),readFile('public/product-images.css','utf8'),readFile('public/mobile-app.css','utf8'),readFile('public/mobile-polish.css','utf8'),readFile('public/premium-theme.js','utf8'),readFile('public/premium-hotfix.js','utf8'),readFile('public/premium-cleanup.js','utf8'),readFile('public/mobile-app.js','utf8'),readFile('public/premium-fashion.svg','utf8'),readFile('public/auth.js','utf8'),readFile('public/password-recovery.js','utf8'),readFile('public/users-ui.js','utf8'),readFile('api/product-image.js','utf8')
+const [html,baseCss,fidelity,hotfixCss,cleanupCss,productImagesCss,mobileCss,mobilePolish,js,hotfixJs,cleanupJs,mobileJs,svg,authJs,passwordJs,usersJs,manifest,pwaIcon,pwaMaskable,pwaRuntime,serviceWorker,productImageApi]=await Promise.all([
+  readFile('public/index.html','utf8'),readFile('public/premium-theme.css','utf8'),readFile('public/premium-fidelity.css','utf8'),readFile('public/premium-hotfix.css','utf8'),readFile('public/premium-cleanup.css','utf8'),readFile('public/product-images.css','utf8'),readFile('public/mobile-app.css','utf8'),readFile('public/mobile-polish.css','utf8'),readFile('public/premium-theme.js','utf8'),readFile('public/premium-hotfix.js','utf8'),readFile('public/premium-cleanup.js','utf8'),readFile('public/mobile-app.js','utf8'),readFile('public/premium-fashion.svg','utf8'),readFile('public/auth.js','utf8'),readFile('public/password-recovery.js','utf8'),readFile('public/users-ui.js','utf8'),readFile('public/manifest.webmanifest','utf8'),readFile('public/pwa-icon.svg','utf8'),readFile('public/pwa-icon-maskable.svg','utf8'),readFile('public/pwa-runtime.js','utf8'),readFile('public/sw.js','utf8'),readFile('api/product-image.js','utf8')
 ]);
 
-const htmlMarkers=['id="elegance-premium-critical"','id="elegance-premium-runtime"','id="elegance-mobile-app"','id="elegance-mobile-app-runtime"','/auth.js','/password-recovery.js','/users-ui.js','Faturamento do mês','Lucro líquido do mês','Hard SVG isolation','sanitizeMetricSvg','ELEGANCE_MOVE_CLEANUP_V1','ELEGANCE_MOVE_MOBILE_FIX_V2','ELEGANCE_MOVE_PRODUCT_IMAGES_V1','ELEGANCE_MOVE_MOBILE_APP_V1','ELEGANCE_MOVE_MOBILE_POLISH_V1','premium-financial-duplicate','id="productPhotoInput"','product-photo-stock','product-photo-sale'];
+const htmlMarkers=['id="elegance-premium-critical"','id="elegance-premium-runtime"','id="elegance-mobile-app"','id="elegance-mobile-app-runtime"','/auth.js','/password-recovery.js','/users-ui.js','Faturamento do mês','Lucro líquido do mês','Hard SVG isolation','sanitizeMetricSvg','ELEGANCE_MOVE_CLEANUP_V1','ELEGANCE_MOVE_MOBILE_FIX_V2','ELEGANCE_MOVE_PRODUCT_IMAGES_V1','ELEGANCE_MOVE_MOBILE_APP_V1','ELEGANCE_MOVE_MOBILE_POLISH_V1','premium-financial-duplicate','id="productPhotoInput"','product-photo-stock','product-photo-sale','manifest.webmanifest','id="elegance-pwa-launch"','id="emPwaSplash"','/pwa-runtime.js'];
 for(const marker of htmlMarkers) if(!html.includes(marker)) throw new Error(`Build incompleto: ${marker}`);
 
 const bodyOpen=html.indexOf('<body');
@@ -25,7 +25,12 @@ for(const marker of cssMarkers) if(!cssAll.includes(marker)) throw new Error(`CS
 const jsAll=js+'\n'+hotfixJs+'\n'+cleanupJs+'\n'+mobileJs;
 const jsMarkers=['MutationObserver','organizeDashboard','enhanceCategoryCard','enhanceTopClients','enhanceProducts','requestAnimationFrame','dashboardContent','sanitizeMetricSvg','organizeMetrics','cleanSecondary','Supabase online','emMobileDock','labelTables'];
 for(const marker of jsMarkers) if(!jsAll.includes(marker)) throw new Error(`JS premium incompleto: ${marker}`);
-new Function(js);new Function(hotfixJs);new Function(cleanupJs);new Function(mobileJs);new Function(authJs);new Function(passwordJs);new Function(usersJs);
+new Function(js);new Function(hotfixJs);new Function(cleanupJs);new Function(mobileJs);new Function(authJs);new Function(passwordJs);new Function(usersJs);new Function(pwaRuntime);new Function(serviceWorker);
+
+for(const marker of ['"display": "standalone"','pwa-icon.svg','pwa-icon-maskable.svg']) if(!manifest.includes(marker)) throw new Error(`Manifest PWA incompleto: ${marker}`);
+for(const marker of ['<svg','viewBox="0 0 512 512"']) if(!pwaIcon.includes(marker)||!pwaMaskable.includes(marker)) throw new Error(`Ícone PWA inválido: ${marker}`);
+for(const marker of ['handleSplash','__EM_PWA_OPEN_INSTALL__','beforeinstallprompt']) if(!pwaRuntime.includes(marker)) throw new Error(`Runtime PWA incompleto: ${marker}`);
+for(const marker of ['elegance-move-pwa-v3','/api/','APP_SHELL']) if(!serviceWorker.includes(marker)) throw new Error(`Service worker incompleto: ${marker}`);
 
 const apiMarkers=['sessionUser','product-images','Image too large','x-upsert'];
 for(const marker of apiMarkers) if(!productImageApi.includes(marker)) throw new Error(`API de foto incompleta: ${marker}`);
@@ -46,6 +51,7 @@ if(!svg.startsWith('<svg')||!svg.includes('viewBox="0 0 520 520"')) throw new Er
 if((html.match(/id="elegance-premium-critical"/g)||[]).length!==1) throw new Error('CSS premium inline duplicado');
 if((html.match(/id="elegance-premium-runtime"/g)||[]).length!==1) throw new Error('JS premium inline duplicado');
 if((html.match(/id="elegance-mobile-app"/g)||[]).length!==1||(html.match(/id="elegance-mobile-app-runtime"/g)||[]).length!==1) throw new Error('Camada mobile inline duplicada');
+if((html.match(/id="emPwaSplash"/g)||[]).length!==1||(html.match(/id="elegance-pwa-launch"/g)||[]).length!==1) throw new Error('Splash PWA duplicado ou ausente');
 if(html.includes('href="/premium-theme.css"')||html.includes('href="/premium-fidelity.css"')||html.includes('href="/premium-cleanup.css"')||html.includes('href="/product-images.css"')||html.includes('src="/premium-theme.js"')||html.includes('src="/premium-cleanup.js"')) throw new Error('Build ainda depende de assets premium externos');
 
-console.log('PREMIUM_BUILD_VERIFIED',{htmlBytes:Buffer.byteLength(html),cssBytes:Buffer.byteLength(cssAll),jsBytes:Buffer.byteLength(jsAll),mainScriptBytes:Buffer.byteLength(mainCode),svgBytes:Buffer.byteLength(svg),placement:'safe',cleanup:true,mobileFix:true,mobileApp:true,mobilePolish:true,commercialDocument:true,printContact:true,productImages:true});
+console.log('PREMIUM_BUILD_VERIFIED',{htmlBytes:Buffer.byteLength(html),cssBytes:Buffer.byteLength(cssAll),jsBytes:Buffer.byteLength(jsAll),mainScriptBytes:Buffer.byteLength(mainCode),svgBytes:Buffer.byteLength(svg),placement:'safe',cleanup:true,mobileFix:true,mobileApp:true,mobilePolish:true,pwa:true,pwaSplash:true,commercialDocument:true,printContact:true,productImages:true});
