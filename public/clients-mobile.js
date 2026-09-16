@@ -1,5 +1,5 @@
 /* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V1 */
-/* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V8 */
+/* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V9 */
 (() => {
   const root=document.documentElement;
   let scheduled=false;
@@ -10,19 +10,24 @@
   const mobile=()=>window.matchMedia('(max-width:760px)').matches||/android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
   function ensureDetailStyle(){
-    if(document.getElementById('em-client-detail-v8-style')) return;
+    if(document.getElementById('em-client-detail-v9-style')) return;
     const style=document.createElement('style');
-    style.id='em-client-detail-v8-style';
+    style.id='em-client-detail-v9-style';
     style.textContent=`
       @media(max-width:760px){
         html.em-client-detail-open #emMobileDock{display:none!important}
-        .em-client-detail-v8{max-width:100%!important;overflow-x:hidden!important;box-sizing:border-box!important}
-        .em-client-summary-v8{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0 0 14px!important;box-sizing:border-box!important}
-        .em-client-stat-v8{min-width:0!important;width:100%!important;box-sizing:border-box!important;border:1px solid rgba(150,99,85,.10)!important;border-radius:18px!important;background:#fff!important;padding:13px 12px!important;min-height:104px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;overflow:hidden!important;box-shadow:0 8px 22px rgba(81,54,47,.035)!important}
-        .em-client-stat-v8-label{font-size:9px!important;line-height:1.2!important;font-weight:800!important;color:#806c65!important;margin:0 0 7px!important;white-space:normal!important}
-        .em-client-stat-v8-value{font-size:20px!important;line-height:1!important;font-weight:850!important;letter-spacing:-.035em!important;color:#2e2421!important;white-space:normal!important;overflow-wrap:anywhere!important}
-        .em-client-stat-v8-sub{font-size:8px!important;line-height:1.3!important;color:#9a8882!important;margin-top:7px!important;white-space:normal!important}
-        [data-em-client-stat-hidden="true"]{display:none!important}
+        .em-client-detail-v9{max-width:100%!important;overflow-x:hidden!important;box-sizing:border-box!important}
+        .em-client-summary-v9{display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0 0 14px!important;box-sizing:border-box!important}
+        .em-client-stat-v9{width:100%!important;min-width:0!important;min-height:72px!important;box-sizing:border-box!important;border:1px solid rgba(150,99,85,.10)!important;border-radius:16px!important;background:#fff!important;padding:12px 13px!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;grid-template-areas:'label value' 'sub value'!important;column-gap:12px!important;row-gap:5px!important;align-items:center!important;overflow:hidden!important;box-shadow:0 7px 20px rgba(81,54,47,.035)!important}
+        .em-client-stat-v9-label{grid-area:label!important;font-size:9px!important;line-height:1.2!important;font-weight:850!important;color:#6f5a53!important;margin:0!important;white-space:normal!important}
+        .em-client-stat-v9-value{grid-area:value!important;justify-self:end!important;text-align:right!important;font-size:18px!important;line-height:1!important;font-weight:850!important;letter-spacing:-.035em!important;color:#2e2421!important;white-space:nowrap!important;max-width:48vw!important}
+        .em-client-stat-v9-sub{grid-area:sub!important;font-size:8px!important;line-height:1.3!important;color:#9a8882!important;margin:0!important;white-space:normal!important}
+        .em-client-stat-v9[data-kind='status'] .em-client-stat-v9-value{font-size:11px!important;letter-spacing:0!important;color:#5f7c65!important;background:#edf5ef!important;border:1px solid rgba(95,124,101,.12)!important;border-radius:999px!important;padding:7px 10px!important}
+        [data-em-client-stat-hidden='true']{display:none!important}
+      }
+      @media(max-width:390px){
+        .em-client-stat-v9{min-height:68px!important;padding:11px 12px!important;column-gap:9px!important}
+        .em-client-stat-v9-value{font-size:16px!important;max-width:46vw!important}
       }
     `;
     document.head.appendChild(style);
@@ -94,7 +99,7 @@
 
   function findLabelNode(detail,def){
     const nodes=[...detail.querySelectorAll('small,span,p,b,strong,div')]
-      .filter(el=>!el.closest('.em-client-summary-v8'))
+      .filter(el=>!el.closest('.em-client-summary-v9'))
       .filter(visible)
       .filter(el=>def.match(norm(txt(el))))
       .filter(el=>txt(el).length<120);
@@ -136,7 +141,10 @@
 
   function buildDetailSummary(detail){
     ensureDetailStyle();
-    if(detail.querySelector('.em-client-summary-v8')) return true;
+    if(detail.querySelector('.em-client-summary-v9')) return true;
+
+    detail.querySelectorAll('.em-client-summary-v8').forEach(el=>el.remove());
+    detail.querySelectorAll('[data-em-client-stat-hidden="true"]').forEach(el=>el.removeAttribute('data-em-client-stat-hidden'));
 
     const items=[];
     for(const def of defs){
@@ -151,15 +159,17 @@
     const cards=items.map(x=>x.card);
     if(new Set(cards).size!==4) return false;
 
-    const grid=document.createElement('section');
-    grid.className='em-client-summary-v8';
-    grid.setAttribute('aria-label','Resumo da cliente');
+    const list=document.createElement('section');
+    list.className='em-client-summary-v9';
+    list.setAttribute('aria-label','Resumo da cliente');
     for(const {def,value} of items){
-      const card=document.createElement('div');card.className='em-client-stat-v8';
-      const label=document.createElement('div');label.className='em-client-stat-v8-label';label.textContent=def.label;
-      const val=document.createElement('div');val.className='em-client-stat-v8-value';val.textContent=value;
-      const sub=document.createElement('div');sub.className='em-client-stat-v8-sub';sub.textContent=def.sub;
-      card.append(label,val,sub);grid.appendChild(card);
+      const row=document.createElement('div');
+      row.className='em-client-stat-v9';
+      row.dataset.kind=def.id;
+      const label=document.createElement('div');label.className='em-client-stat-v9-label';label.textContent=def.label;
+      const val=document.createElement('div');val.className='em-client-stat-v9-value';val.textContent=value;
+      const sub=document.createElement('div');sub.className='em-client-stat-v9-sub';sub.textContent=def.sub;
+      row.append(label,val,sub);list.appendChild(row);
     }
 
     const body=detail.querySelector('.modal-body')||detail;
@@ -174,10 +184,10 @@
     const info=[...body.querySelectorAll('div,.card,.status-box')].find(el=>{
       const s=norm(txt(el));return s.includes('whatsapp')&&s.includes('cidade')&&s.includes('origem')&&s.length<550;
     });
-    if(info&&info.parentElement===body) body.insertBefore(grid,info);
+    if(info&&info.parentElement===body) body.insertBefore(list,info);
     else {
       const firstVisible=[...body.children].find(ch=>visible(ch)&&!ch.matches('.modal-head'));
-      if(firstVisible) body.insertBefore(grid,firstVisible); else body.prepend(grid);
+      if(firstVisible) body.insertBefore(list,firstVisible); else body.prepend(list);
     }
     return true;
   }
@@ -187,7 +197,7 @@
     const detail=findDetail();
     root.classList.toggle('em-client-detail-open',!!detail);
     if(!detail) return;
-    detail.classList.add('em-client-detail-v8');
+    detail.classList.add('em-client-detail-v9');
     detail.style.setProperty('max-width','100%','important');
     detail.style.setProperty('overflow-x','hidden','important');
     buildDetailSummary(detail);
