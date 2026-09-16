@@ -1,5 +1,5 @@
 /* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V1 */
-/* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V5 */
+/* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V6 */
 (() => {
   const root=document.documentElement;
   let scheduled=false;
@@ -7,22 +7,18 @@
   const txt=(el)=>String(el?.textContent||'').replace(/\s+/g,' ').trim();
   const norm=(v)=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const visible=(el)=>{if(!el||!el.isConnected)return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0;};
+  const mobile=()=>window.matchMedia('(max-width:760px)').matches||/android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
   function ensureDetailStyle(){
-    if(document.getElementById('em-client-detail-v5-style')) return;
+    if(document.getElementById('em-client-detail-v6-style')) return;
     const style=document.createElement('style');
-    style.id='em-client-detail-v5-style';
+    style.id='em-client-detail-v6-style';
     style.textContent=`
-      @media(max-width:760px){
-        html.em-client-detail-open #emMobileDock{display:none!important}
-        .em-client-detail-sheet{box-sizing:border-box!important;max-width:100%!important;overflow-x:hidden!important}
-        .em-client-stats-v5{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;width:100%!important;max-width:100%!important;margin:0 0 16px!important;box-sizing:border-box!important}
-        .em-client-stat-v5{min-width:0!important;width:100%!important;box-sizing:border-box!important;border:1px solid rgba(150,99,85,.11)!important;border-radius:18px!important;background:#fff!important;padding:14px 13px!important;min-height:108px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;overflow:hidden!important;box-shadow:0 8px 22px rgba(81,54,47,.035)!important}
-        .em-client-stat-v5-label{font-size:10px!important;line-height:1.2!important;font-weight:800!important;color:#78635c!important;margin-bottom:8px!important;white-space:normal!important}
-        .em-client-stat-v5-value{font-size:21px!important;line-height:1!important;font-weight:850!important;letter-spacing:-.035em!important;color:#2e2421!important;max-width:100%!important;white-space:normal!important;overflow-wrap:anywhere!important}
-        .em-client-stat-v5-sub{font-size:8px!important;line-height:1.3!important;color:#9b8881!important;margin-top:7px!important;white-space:normal!important}
-        [data-em-client-original-summary="true"]{display:none!important}
-      }
+      html.em-client-detail-open #emMobileDock{display:none!important}
+      .em-client-detail-sheet{box-sizing:border-box!important;max-width:100%!important;overflow-x:hidden!important}
+      .em-client-native-summary-v6{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-flow:row!important;gap:10px!important;width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important;overflow:visible!important;transform:none!important}
+      .em-client-native-summary-v6>.em-client-native-stat-v6{box-sizing:border-box!important;min-width:0!important;max-width:none!important;width:100%!important;flex:none!important;float:none!important;margin-left:0!important;margin-right:0!important;transform:none!important;overflow:hidden!important}
+      .em-client-native-summary-v6>.em-client-native-stat-v6 *{max-width:100%!important;min-width:0!important;white-space:normal!important;overflow-wrap:anywhere!important;box-sizing:border-box!important}
     `;
     document.head.appendChild(style);
   }
@@ -69,104 +65,101 @@
     });
   }
 
-  const defs=[
-    {key:'status',label:'Status',kind:'status',sub:'Relacionamento com a cliente'},
-    {key:'total comprado',label:'Total comprado',kind:'money',sub:'Histórico de compras'},
-    {key:'ja recebido',label:'Já recebido',kind:'money',sub:'Pagamentos confirmados'},
-    {key:'saldo em aberto',label:'Saldo em aberto',kind:'money',sub:'A receber'}
-  ];
-  const keys=defs.map(d=>d.key);
-  const keyCount=(el)=>{const s=norm(txt(el));return keys.filter(k=>s.includes(k)).length;};
+  const statKeys=['status','total comprado','ja recebido','saldo em aberto'];
+
+  function findTextLeaf(needle){
+    const all=[...document.querySelectorAll('a,button,small,span,p,b,strong,div')];
+    const hits=all.filter(el=>{
+      if(!visible(el)) return false;
+      const s=norm(txt(el));
+      return s.includes(needle)&&s.length<180;
+    });
+    hits.sort((a,b)=>a.children.length-b.children.length||txt(a).length-txt(b).length);
+    return hits[0]||null;
+  }
 
   function findDetailRoot(){
-    const headings=[...document.querySelectorAll('h1,h2,h3,h4,strong,div,span')].filter(el=>visible(el)&&norm(txt(el))==='compras');
-    for(const heading of headings){
-      let cur=heading.parentElement;
-      for(let i=0;i<10&&cur&&cur!==document.body&&cur!==document.documentElement;i++,cur=cur.parentElement){
-        const s=norm(txt(cur));
-        if(s.includes('whatsapp')&&s.includes('compras')&&keys.filter(k=>s.includes(k)).length>=2) return cur;
-      }
+    const whatsapp=findTextLeaf('whatsapp');
+    if(!whatsapp) return null;
+    let cur=whatsapp;
+    for(let i=0;i<14&&cur&&cur!==document.body&&cur!==document.documentElement;i++,cur=cur.parentElement){
+      const s=norm(txt(cur));
+      if(s.includes('whatsapp')&&s.includes('compras')&&(s.includes('total comprado')||s.includes('saldo em aberto')||s.includes('ja recebido'))) return cur;
     }
     return null;
   }
 
-  function findLabel(scope,key){
-    return [...scope.querySelectorAll('small,span,p,b,strong,div')]
-      .filter(el=>!el.closest('.em-client-stats-v5'))
-      .filter(el=>{const s=norm(txt(el));return (s===key||s.startsWith(key+' '))&&s.length<100;})
-      .sort((a,b)=>a.children.length-b.children.length)[0]||null;
+  function matchesStatChild(child,key){
+    const s=norm(txt(child));
+    if(key==='status') return s.includes('status')&&(s.includes('ativo')||s.includes('inativo')||s.length<120);
+    return s.includes(key);
   }
 
-  function commonAncestor(nodes,limit){
-    let cur=nodes[0]?.parentElement||null;
-    while(cur&&cur!==limit&&cur!==document.body){
-      if(nodes.every(n=>cur.contains(n))) return cur;
-      cur=cur.parentElement;
+  function findNativeSummary(detail){
+    const candidates=[];
+    const nodes=[detail,...detail.querySelectorAll('div,section,article')];
+    for(const el of nodes){
+      if(!visible(el)||el.classList.contains('em-client-stats-v5')) continue;
+      const children=[...el.children].filter(visible);
+      if(children.length<4||children.length>8) continue;
+      const matched=statKeys.map(key=>children.find(ch=>matchesStatChild(ch,key))).filter(Boolean);
+      if(matched.length!==4||new Set(matched).size!==4) continue;
+      const r=el.getBoundingClientRect();
+      candidates.push({el,matched,area:r.width*r.height,text:txt(el).length});
     }
-    return null;
+    candidates.sort((a,b)=>a.area-b.area||a.text-b.text);
+    return candidates[0]||null;
   }
 
-  function directChildContaining(parent,node){
-    let cur=node;
-    while(cur?.parentElement&&cur.parentElement!==parent) cur=cur.parentElement;
-    return cur?.parentElement===parent?cur:null;
-  }
-
-  function valueFromCard(card,def){
-    const raw=txt(card);
-    if(def.kind==='money'){
-      const m=raw.match(/R\$\s*[\d.]+(?:,\d{2})?/i);
-      return m?m[0].replace(/\s+/g,' '):'R$ 0,00';
-    }
-    const n=norm(raw);
-    if(n.includes('inativo')) return 'Inativo';
-    if(n.includes('ativo')) return 'Ativo';
-    return 'Ativo';
-  }
-
-  function rebuildSummary(detail){
-    ensureDetailStyle();
-    if(detail.querySelector('.em-client-stats-v5')) return true;
-    const labels=defs.map(d=>findLabel(detail,d.key));
-    if(labels.some(x=>!x)) return false;
-
-    let summary=commonAncestor(labels,detail);
-    if(!summary||summary===detail) return false;
-    while(summary.parentElement&&summary.parentElement!==detail&&keyCount(summary.parentElement)===4&&norm(txt(summary.parentElement)).includes('whatsapp')===false){
-      const p=summary.parentElement;
-      if(p.children.length>6) break;
-      summary=p;
-    }
-
-    const cards=labels.map(label=>directChildContaining(summary,label));
-    if(cards.some(x=>!x)||new Set(cards).size<4) return false;
-
-    const values=cards.map((card,i)=>valueFromCard(card,defs[i]));
-    const grid=document.createElement('section');
-    grid.className='em-client-stats-v5';
-    grid.setAttribute('aria-label','Resumo da cliente');
-    defs.forEach((def,i)=>{
-      const card=document.createElement('div');card.className='em-client-stat-v5';
-      const label=document.createElement('div');label.className='em-client-stat-v5-label';label.textContent=def.label;
-      const value=document.createElement('div');value.className='em-client-stat-v5-value';value.textContent=values[i];
-      const sub=document.createElement('div');sub.className='em-client-stat-v5-sub';sub.textContent=def.sub;
-      card.append(label,value,sub);grid.appendChild(card);
+  function clearLegacy(detail){
+    detail.querySelectorAll('.em-client-stats-v5').forEach(el=>el.remove());
+    detail.querySelectorAll('[data-em-client-original-summary]').forEach(el=>el.removeAttribute('data-em-client-original-summary'));
+    detail.querySelectorAll('.em-client-native-summary-v6').forEach(el=>{
+      el.classList.remove('em-client-native-summary-v6');
+      [...el.children].forEach(ch=>ch.classList.remove('em-client-native-stat-v6'));
     });
-    summary.dataset.emClientOriginalSummary='true';
-    summary.parentElement.insertBefore(grid,summary);
+  }
+
+  function forceNativeSummary(detail){
+    ensureDetailStyle();
+    clearLegacy(detail);
+    const found=findNativeSummary(detail);
+    if(!found) return false;
+    const {el,matched}=found;
+    el.classList.add('em-client-native-summary-v6');
+    el.style.setProperty('display','grid','important');
+    el.style.setProperty('grid-template-columns','repeat(2,minmax(0,1fr))','important');
+    el.style.setProperty('grid-auto-flow','row','important');
+    el.style.setProperty('gap','10px','important');
+    el.style.setProperty('width','100%','important');
+    el.style.setProperty('max-width','100%','important');
+    el.style.setProperty('min-width','0','important');
+    el.style.setProperty('overflow','visible','important');
+    el.style.setProperty('transform','none','important');
+    for(const card of matched){
+      card.classList.add('em-client-native-stat-v6');
+      card.style.setProperty('min-width','0','important');
+      card.style.setProperty('max-width','none','important');
+      card.style.setProperty('width','100%','important');
+      card.style.setProperty('flex','none','important');
+      card.style.setProperty('box-sizing','border-box','important');
+      card.style.setProperty('transform','none','important');
+    }
     return true;
   }
 
   function decorateDetails(){
+    if(!mobile()){
+      root.classList.remove('em-client-detail-open');
+      return;
+    }
     const detail=findDetailRoot();
-    const open=!!detail;
-    root.classList.toggle('em-client-detail-open',open);
+    root.classList.toggle('em-client-detail-open',!!detail);
     if(!detail) return;
-
     detail.classList.add('em-client-detail-sheet');
-    const shell=detail.closest('.modal')||detail.closest('.modal-back')||detail;
-    shell.classList.add('em-client-detail-sheet');
-    rebuildSummary(detail);
+    const shell=detail.closest('.modal')||detail.closest('.modal-back')||detail.closest('[role="dialog"]');
+    if(shell) shell.classList.add('em-client-detail-sheet');
+    forceNativeSummary(detail);
 
     [...detail.querySelectorAll('.card,.status-box,div')].forEach(card=>{
       const s=norm(txt(card));
@@ -203,5 +196,6 @@
   document.addEventListener('click',()=>setTimeout(refresh,25),true);
   new MutationObserver(refresh).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','data-active-page']});
   window.addEventListener('pageshow',refresh);
+  window.addEventListener('resize',refresh,{passive:true});
   refresh();
 })();
