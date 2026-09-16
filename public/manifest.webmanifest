@@ -2,8 +2,8 @@
   "name": "Elegance Move",
   "short_name": "Elegance Move",
   "description": "Gestão da Elegance Move: vendas, clientes, estoque e financeiro.",
-  "id": "/?app=elegance-move-v8",
-  "start_url": "/?app=elegance-move-v8",
+  "id": "/?app=elegance-move-v9",
+  "start_url": "/?app=elegance-move-v9",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -13,28 +13,10 @@
   "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "/elegance-move-icon-final.png?v=8",
-      "sizes": "512x512",
+      "src": "/elegance-move-rose-gold-v9.png",
+      "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/elegance-move-icon-final.png?v=8",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/pwa-icon.svg?v=8",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/pwa-icon-maskable.svg?v=8",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
     }
   ]
 }
