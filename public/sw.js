@@ -1,6 +1,6 @@
-// Previous cache marker kept for build compatibility: elegance-move-pwa-v3
-const CACHE_NAME='elegance-move-pwa-v4';
-const APP_SHELL=['/','/manifest.webmanifest','/pwa-icon.png','/pwa-icon-maskable.png','/pwa-runtime.js','/auth.js','/password-recovery.js','/users-ui.js'];
+// Legacy marker retained for compatibility: elegance-move-pwa-v3
+const CACHE_NAME='elegance-move-pwa-v8';
+const APP_SHELL=['/','/manifest.webmanifest?v=8','/elegance-move-icon-final.png?v=8','/pwa-runtime.js','/auth.js','/password-recovery.js','/users-ui.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)).catch(()=>{}));
@@ -25,7 +25,7 @@ self.addEventListener('fetch',event=>{
   if(request.mode==='navigate'){
     event.respondWith((async()=>{
       try{
-        const fresh=await fetch(request);
+        const fresh=await fetch(request,{cache:'no-store'});
         const cache=await caches.open(CACHE_NAME);
         cache.put('/',fresh.clone()).catch(()=>{});
         return fresh;
@@ -37,23 +37,15 @@ self.addEventListener('fetch',event=>{
   }
 
   event.respondWith((async()=>{
-    const cached=await caches.match(request);
-    if(cached){
-      event.waitUntil(fetch(request).then(async fresh=>{
-        const cache=await caches.open(CACHE_NAME);
-        await cache.put(request,fresh.clone());
-      }).catch(()=>{}));
-      return cached;
-    }
     try{
-      const fresh=await fetch(request);
+      const fresh=await fetch(request,{cache:'no-store'});
       if(fresh.ok){
         const cache=await caches.open(CACHE_NAME);
         cache.put(request,fresh.clone()).catch(()=>{});
       }
       return fresh;
     }catch{
-      return Response.error();
+      return (await caches.match(request)) || Response.error();
     }
   })());
 });
