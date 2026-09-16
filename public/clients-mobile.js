@@ -1,5 +1,5 @@
 /* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V1 */
-/* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V9 */
+/* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V10 */
 (() => {
   const root=document.documentElement;
   let scheduled=false;
@@ -7,31 +7,6 @@
   const txt=el=>String(el?.textContent||'').replace(/\s+/g,' ').trim();
   const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const visible=el=>{if(!el||!el.isConnected)return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0;};
-  const mobile=()=>window.matchMedia('(max-width:760px)').matches||/android|iphone|ipad|ipod/i.test(navigator.userAgent);
-
-  function ensureDetailStyle(){
-    if(document.getElementById('em-client-detail-v9-style')) return;
-    const style=document.createElement('style');
-    style.id='em-client-detail-v9-style';
-    style.textContent=`
-      @media(max-width:760px){
-        html.em-client-detail-open #emMobileDock{display:none!important}
-        .em-client-detail-v9{max-width:100%!important;overflow-x:hidden!important;box-sizing:border-box!important}
-        .em-client-summary-v9{display:flex!important;flex-direction:column!important;gap:8px!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0 0 14px!important;box-sizing:border-box!important}
-        .em-client-stat-v9{width:100%!important;min-width:0!important;min-height:72px!important;box-sizing:border-box!important;border:1px solid rgba(150,99,85,.10)!important;border-radius:16px!important;background:#fff!important;padding:12px 13px!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;grid-template-areas:'label value' 'sub value'!important;column-gap:12px!important;row-gap:5px!important;align-items:center!important;overflow:hidden!important;box-shadow:0 7px 20px rgba(81,54,47,.035)!important}
-        .em-client-stat-v9-label{grid-area:label!important;font-size:9px!important;line-height:1.2!important;font-weight:850!important;color:#6f5a53!important;margin:0!important;white-space:normal!important}
-        .em-client-stat-v9-value{grid-area:value!important;justify-self:end!important;text-align:right!important;font-size:18px!important;line-height:1!important;font-weight:850!important;letter-spacing:-.035em!important;color:#2e2421!important;white-space:nowrap!important;max-width:48vw!important}
-        .em-client-stat-v9-sub{grid-area:sub!important;font-size:8px!important;line-height:1.3!important;color:#9a8882!important;margin:0!important;white-space:normal!important}
-        .em-client-stat-v9[data-kind='status'] .em-client-stat-v9-value{font-size:11px!important;letter-spacing:0!important;color:#5f7c65!important;background:#edf5ef!important;border:1px solid rgba(95,124,101,.12)!important;border-radius:999px!important;padding:7px 10px!important}
-        [data-em-client-stat-hidden='true']{display:none!important}
-      }
-      @media(max-width:390px){
-        .em-client-stat-v9{min-height:68px!important;padding:11px 12px!important;column-gap:9px!important}
-        .em-client-stat-v9-value{font-size:16px!important;max-width:46vw!important}
-      }
-    `;
-    document.head.appendChild(style);
-  }
 
   function loginVisible(){
     const login=document.getElementById('login');
@@ -75,132 +50,39 @@
     });
   }
 
-  const defs=[
-    {id:'status',label:'Status',sub:'Relacionamento com a cliente',match:s=>s.includes('status'),value:s=>s.includes('inativo')?'Inativo':s.includes('ativo')?'Ativo':'Ativo'},
-    {id:'total',label:'Total comprado',sub:'Histórico de compras',match:s=>s.includes('total')&&(s.includes('compr')||s.includes('gasto'))},
-    {id:'received',label:'Já recebido',sub:'Pagamentos confirmados',match:s=>(s.includes('ja receb')||s.includes('recebido'))&&!s.includes('saldo')},
-    {id:'balance',label:'Saldo em aberto',sub:'A receber',match:s=>s.includes('saldo')&&(s.includes('abert')||s.includes('receb'))}
-  ];
-
-  function findDetail(){
-    const overlays=[...document.querySelectorAll('.modal-back,.modal,[role="dialog"]')].filter(visible);
-    const matches=overlays.filter(el=>{const s=norm(txt(el));return s.includes('whatsapp')&&s.includes('compras');});
-    if(!matches.length) return null;
-    matches.sort((a,b)=>{
-      const am=a.matches('.modal,[role="dialog"]')?0:1;
-      const bm=b.matches('.modal,[role="dialog"]')?0:1;
-      if(am!==bm) return am-bm;
-      const ar=a.getBoundingClientRect(),br=b.getBoundingClientRect();
-      return ar.width*ar.height-br.width*br.height;
-    });
-    const pick=matches[0];
-    return pick.classList.contains('modal-back')?(pick.querySelector('.modal')||pick):pick;
-  }
-
-  function findLabelNode(detail,def){
-    const nodes=[...detail.querySelectorAll('small,span,p,b,strong,div')]
-      .filter(el=>!el.closest('.em-client-summary-v9'))
-      .filter(visible)
-      .filter(el=>def.match(norm(txt(el))))
-      .filter(el=>txt(el).length<120);
-    nodes.sort((a,b)=>a.children.length-b.children.length||txt(a).length-txt(b).length);
-    return nodes[0]||null;
-  }
-
-  function belongsToOtherDef(el,current){
-    const s=norm(txt(el));
-    return defs.some(d=>d!==current&&d.match(s));
-  }
-
-  function cardFromLabel(detail,label,def){
-    let cur=label;
-    let best=label.parentElement||label;
-    for(let i=0;i<7&&cur?.parentElement&&cur.parentElement!==detail;i++){
-      const parent=cur.parentElement;
-      if(belongsToOtherDef(parent,def)) break;
-      best=parent;
-      cur=parent;
-    }
-    return best;
-  }
-
-  function moneyValue(card){
-    const m=txt(card).match(/R\$\s*[\d.]+(?:,\d{2})?/i);
-    return m?m[0].replace(/\s+/g,' '):'R$ 0,00';
-  }
-
-  function commonParent(cards){
-    if(!cards.length) return null;
-    let cur=cards[0].parentElement;
-    while(cur){
-      if(cards.every(c=>cur.contains(c))) return cur;
-      cur=cur.parentElement;
+  function findClientDetail(){
+    const modals=[...document.querySelectorAll('.modal,[role="dialog"],.modal-back')].filter(visible);
+    for(const el of modals){
+      const s=norm(txt(el));
+      if(s.includes('whatsapp')&&s.includes('compras')) return el.classList.contains('modal-back')?(el.querySelector('.modal')||el):el;
     }
     return null;
   }
 
-  function buildDetailSummary(detail){
-    ensureDetailStyle();
-    if(detail.querySelector('.em-client-summary-v9')) return true;
-
-    detail.querySelectorAll('.em-client-summary-v8').forEach(el=>el.remove());
-    detail.querySelectorAll('[data-em-client-stat-hidden="true"]').forEach(el=>el.removeAttribute('data-em-client-stat-hidden'));
-
-    const items=[];
-    for(const def of defs){
-      const label=findLabelNode(detail,def);
-      if(!label) return false;
-      const card=cardFromLabel(detail,label,def);
-      if(!card) return false;
-      const raw=norm(txt(card));
-      const value=def.id==='status'?def.value(raw):moneyValue(card);
-      items.push({def,card,value});
-    }
-    const cards=items.map(x=>x.card);
-    if(new Set(cards).size!==4) return false;
-
-    const list=document.createElement('section');
-    list.className='em-client-summary-v9';
-    list.setAttribute('aria-label','Resumo da cliente');
-    for(const {def,value} of items){
-      const row=document.createElement('div');
-      row.className='em-client-stat-v9';
-      row.dataset.kind=def.id;
-      const label=document.createElement('div');label.className='em-client-stat-v9-label';label.textContent=def.label;
-      const val=document.createElement('div');val.className='em-client-stat-v9-value';val.textContent=value;
-      const sub=document.createElement('div');sub.className='em-client-stat-v9-sub';sub.textContent=def.sub;
-      row.append(label,val,sub);list.appendChild(row);
-    }
-
-    const body=detail.querySelector('.modal-body')||detail;
-    const parent=commonParent(cards);
-    if(parent&&parent!==detail&&parent!==body){
-      const s=norm(txt(parent));
-      const matches=defs.filter(d=>d.match(s)).length;
-      if(matches>=3&&s.length<650) parent.dataset.emClientStatHidden='true';
-      else cards.forEach(c=>c.dataset.emClientStatHidden='true');
-    }else cards.forEach(c=>c.dataset.emClientStatHidden='true');
-
-    const info=[...body.querySelectorAll('div,.card,.status-box')].find(el=>{
-      const s=norm(txt(el));return s.includes('whatsapp')&&s.includes('cidade')&&s.includes('origem')&&s.length<550;
-    });
-    if(info&&info.parentElement===body) body.insertBefore(list,info);
-    else {
-      const firstVisible=[...body.children].find(ch=>visible(ch)&&!ch.matches('.modal-head'));
-      if(firstVisible) body.insertBefore(list,firstVisible); else body.prepend(list);
-    }
-    return true;
-  }
-
-  function decorateDetails(){
-    if(!mobile()){root.classList.remove('em-client-detail-open');return;}
-    const detail=findDetail();
-    root.classList.toggle('em-client-detail-open',!!detail);
+  function hideBrokenMetrics(){
+    if(!window.matchMedia('(max-width:760px)').matches) return;
+    const detail=findClientDetail();
     if(!detail) return;
-    detail.classList.add('em-client-detail-v9');
-    detail.style.setProperty('max-width','100%','important');
+
+    detail.querySelectorAll('.em-client-summary-v8,.em-client-summary-v9').forEach(el=>el.remove());
+    detail.querySelectorAll('[data-em-client-stat-hidden]').forEach(el=>el.removeAttribute('data-em-client-stat-hidden'));
+
+    const direct=[...detail.querySelectorAll('.grid4,.kpi-grid,.premium-kpi-secondary,.em-client-detail-metrics')].filter(visible);
+    direct.forEach(el=>el.style.setProperty('display','none','important'));
+
+    if(direct.length===0){
+      const keys=['status','total comprado','ja recebido','saldo em aberto'];
+      const candidates=[...detail.querySelectorAll('div,section,article')].filter(visible);
+      const target=candidates.find(el=>{
+        const children=[...el.children].filter(visible);
+        if(children.length<4||children.length>6) return false;
+        const s=norm(txt(el));
+        return keys.filter(k=>s.includes(k)).length>=3;
+      });
+      if(target) target.style.setProperty('display','none','important');
+    }
+
     detail.style.setProperty('overflow-x','hidden','important');
-    buildDetailSummary(detail);
   }
 
   function decorate(){
@@ -222,7 +104,7 @@
         classifyClientRows(c);
       }
     }
-    decorateDetails();
+    hideBrokenMetrics();
   }
 
   function refresh(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;decorate();});}
