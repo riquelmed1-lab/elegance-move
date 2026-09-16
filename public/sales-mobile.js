@@ -1,3 +1,4 @@
+/* ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V1 */
 /* ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V2 */
 (() => {
   const root=document.documentElement;
@@ -37,8 +38,7 @@
     const labels=['faturamento liquido','descontos','recebido','em aberto','a receber','saldo pendente'];
     const candidates=[...c.querySelectorAll('.metric,.card')].filter(el=>{
       const t=norm(text(el));
-      const direct=[...el.children].map(child=>norm(text(child))).join(' ');
-      return labels.some(label=>t.startsWith(label)||direct.startsWith(label)||t.includes(label));
+      return labels.some(label=>t.startsWith(label)||t.includes(label));
     });
     return candidates.filter((el,index,arr)=>!arr.some(other=>other!==el&&other.contains(el)));
   }
