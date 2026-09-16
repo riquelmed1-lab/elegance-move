@@ -2,8 +2,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 const indexPath='public/index.html';
 let html=await readFile(indexPath,'utf8');
-const ICON='/elegance-move-icon-final.png?v=8';
-const MANIFEST='/manifest.webmanifest?v=8';
+const ICON='/elegance-move-rose-gold-v9.png';
+const MANIFEST='/manifest.webmanifest?v=9';
 
 const headTags=`
 <link rel="manifest" href="${MANIFEST}">
@@ -12,9 +12,9 @@ const headTags=`
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Elegance Move">
-<link rel="icon" href="${ICON}" type="image/png" sizes="512x512">
-<link rel="apple-touch-icon" href="${ICON}">
-<link rel="apple-touch-icon-precomposed" href="${ICON}">
+<link rel="icon" href="${ICON}" type="image/png" sizes="180x180">
+<link rel="apple-touch-icon" sizes="180x180" href="${ICON}">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="${ICON}">
 <style id="elegance-pwa-launch">
 #emPwaSplash{display:none}
 @media (display-mode:standalone){
@@ -60,11 +60,11 @@ const bodyClose=html.lastIndexOf('</body>');
 if(bodyClose<0) throw new Error('index.html sem </body>');
 html=html.slice(0,bodyClose)+'<script src="/pwa-runtime.js"></script>'+html.slice(bodyClose);
 
-for(const marker of ['manifest.webmanifest?v=8','apple-mobile-web-app-capable','apple-touch-icon-precomposed','pwa-runtime.js','theme-color','emPwaSplash','elegance-pwa-launch','elegance-move-icon-final.png?v=8']){
+for(const marker of ['manifest.webmanifest?v=9','apple-mobile-web-app-capable','apple-touch-icon-precomposed','pwa-runtime.js','theme-color','emPwaSplash','elegance-pwa-launch','elegance-move-rose-gold-v9.png']){
   if(!html.includes(marker)) throw new Error(`PWA incompleto: ${marker}`);
 }
 const realHeadClose=html.lastIndexOf('</head>',html.indexOf('<body'));
 const pwaStyleIndex=html.indexOf('id="elegance-pwa-launch"');
 if(realHeadClose<0||pwaStyleIndex<0||pwaStyleIndex>realHeadClose) throw new Error('PWA foi injetado fora do <head> real');
 await writeFile(indexPath,html,'utf8');
-console.log('PWA_PATCH_OK',{indexBytes:Buffer.byteLength(html),splash:true,placement:'safe',icon:'elegance-final-v8'});
+console.log('PWA_PATCH_OK',{indexBytes:Buffer.byteLength(html),splash:true,placement:'safe',icon:'rose-gold-v9'});
