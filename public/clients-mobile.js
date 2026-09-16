@@ -1,5 +1,5 @@
 /* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V1 */
-/* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V2 */
+/* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V3 */
 (() => {
   const root=document.documentElement;
   let scheduled=false;
@@ -40,51 +40,87 @@
           if(key.includes('cliente')||key==='nome') td.classList.add('em-client-name');
           else if(key.includes('whatsapp')||key.includes('telefone')) td.classList.add('em-client-whatsapp');
           else if(key.includes('cidade')) td.classList.add('em-client-city');
-          else if(key.includes('ultima compra')||key.includes('última compra')) td.classList.add('em-client-last');
+          else if(key.includes('ultima compra')) td.classList.add('em-client-last');
           else if(key.includes('total gasto')||key.includes('total comprado')) td.classList.add('em-client-total');
           else if(key.includes('status')) td.classList.add('em-client-status');
-          else if(key.includes('acoes')||key.includes('ações')) td.classList.add('em-client-actions');
+          else if(key.includes('acoes')) td.classList.add('em-client-actions');
         });
       });
     });
   }
 
+  const statLabels=['status','total comprado','ja recebido','saldo em aberto'];
+  const labelCount=(el)=>{
+    const s=norm(txt(el));
+    return statLabels.filter(label=>s.includes(label)).length;
+  };
+
+  function findStatCard(modal,label){
+    const nodes=[...modal.querySelectorAll('*')].filter(el=>{
+      const s=norm(txt(el));
+      return (s===label||s.startsWith(label+' '))&&s.length<90;
+    });
+    const leaf=nodes.sort((a,b)=>a.children.length-b.children.length)[0];
+    if(!leaf) return null;
+    let cur=leaf;
+    while(cur&&cur.parentElement&&cur.parentElement!==modal){
+      const parent=cur.parentElement;
+      if(labelCount(parent)>=2) break;
+      cur=parent;
+    }
+    return cur===modal?null:cur;
+  }
+
+  function forceMetricLayout(modal){
+    const cards=statLabels.map(label=>findStatCard(modal,label)).filter(Boolean);
+    const unique=[...new Set(cards)];
+    if(unique.length<4) return false;
+
+    let parent=unique[0].parentElement;
+    while(parent&&parent!==modal&&!unique.every(card=>parent.contains(card))) parent=parent.parentElement;
+    if(!parent||parent===modal) return false;
+
+    parent.dataset.emClientStats='true';
+    parent.style.setProperty('display','grid','important');
+    parent.style.setProperty('grid-template-columns','repeat(2,minmax(0,1fr))','important');
+    parent.style.setProperty('gap','10px','important');
+    parent.style.setProperty('width','100%','important');
+    parent.style.setProperty('max-width','100%','important');
+    parent.style.setProperty('overflow','visible','important');
+
+    unique.forEach((card,index)=>{
+      card.dataset.emClientStat=statLabels[index]||'metric';
+      card.style.setProperty('width','100%','important');
+      card.style.setProperty('min-width','0','important');
+      card.style.setProperty('max-width','100%','important');
+      card.style.setProperty('box-sizing','border-box','important');
+      card.style.setProperty('overflow','hidden','important');
+      card.style.setProperty('padding','14px 12px','important');
+      card.style.setProperty('min-height','102px','important');
+      card.style.setProperty('height','auto','important');
+      card.querySelectorAll('*').forEach(child=>{
+        child.style.setProperty('max-width','100%','important');
+        child.style.setProperty('white-space','normal','important');
+        child.style.setProperty('overflow-wrap','anywhere','important');
+      });
+    });
+    return true;
+  }
+
   function decorateDetails(){
     let detailOpen=false;
-    document.querySelectorAll('.modal,.modal-back').forEach(el=>{
-      const t=norm(txt(el));
-      const isDetail=t.includes('compras')&&t.includes('whatsapp')&&(t.includes('saldo em aberto')||t.includes('total comprado')||t.includes('ja recebido'));
-      el.classList.toggle('em-client-detail-modal',isDetail);
+    document.querySelectorAll('.modal').forEach(modal=>{
+      const t=norm(txt(modal));
+      const isDetail=t.includes('compras')&&t.includes('whatsapp')&&statLabels.filter(k=>t.includes(k)).length>=2;
+      modal.classList.toggle('em-client-detail-sheet',isDetail);
       if(!isDetail) return;
       detailOpen=true;
-      const modal=el.classList.contains('modal')?el:el.querySelector('.modal');
-      if(!modal) return;
-      modal.classList.add('em-client-detail-sheet');
-
-      const candidates=[...modal.querySelectorAll('.grid4,.kpi-grid,.premium-kpi-secondary,.grid,.metrics')];
-      let metrics=candidates.find(grid=>{
-        const s=norm(txt(grid));
-        return ['status','total comprado','ja recebido','saldo em aberto'].filter(k=>s.includes(k)).length>=2;
-      });
-      if(!metrics){
-        const cards=[...modal.querySelectorAll('.metric,.card')].filter(card=>{
-          const s=norm(txt(card));
-          return s.includes('total comprado')||s.includes('ja recebido')||s.includes('saldo em aberto')||s.startsWith('status');
-        });
-        if(cards.length>=2){
-          metrics=cards[0].parentElement;
-        }
-      }
-      if(metrics){
-        metrics.classList.add('em-client-detail-metrics');
-        [...metrics.children].forEach(card=>card.classList.add('em-client-detail-metric'));
-      }
+      forceMetricLayout(modal);
 
       [...modal.querySelectorAll('.card,.status-box')].forEach(card=>{
         const s=norm(txt(card));
         if(s.includes('whatsapp')&&(s.includes('cidade')||s.includes('origem')||s.includes('observacoes'))) card.classList.add('em-client-detail-info');
       });
-
       const purchases=[...modal.querySelectorAll('h1,h2,h3')].find(h=>norm(txt(h))==='compras');
       if(purchases) purchases.classList.add('em-client-purchases-title');
     });
@@ -126,7 +162,7 @@
   }
 
   document.addEventListener('DOMContentLoaded',refresh,{once:true});
-  document.addEventListener('click',()=>setTimeout(refresh,20),true);
+  document.addEventListener('click',()=>setTimeout(refresh,30),true);
   new MutationObserver(refresh).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','data-active-page']});
   window.addEventListener('pageshow',refresh);
   refresh();
