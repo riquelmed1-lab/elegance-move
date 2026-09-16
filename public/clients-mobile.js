@@ -1,24 +1,27 @@
 /* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V1 */
-/* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V4 */
+/* ELEGANCE_MOVE_CLIENTS_MOBILE_RUNTIME_V5 */
 (() => {
   const root=document.documentElement;
   let scheduled=false;
   const content=()=>document.getElementById('content')||document.querySelector('.content');
   const txt=(el)=>String(el?.textContent||'').replace(/\s+/g,' ').trim();
   const norm=(v)=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const visible=(el)=>{if(!el||!el.isConnected)return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0;};
 
-  function ensureFinalStyle(){
-    if(document.getElementById('em-client-stats-final-style')) return;
+  function ensureDetailStyle(){
+    if(document.getElementById('em-client-detail-v5-style')) return;
     const style=document.createElement('style');
-    style.id='em-client-stats-final-style';
+    style.id='em-client-detail-v5-style';
     style.textContent=`
       @media(max-width:760px){
-        .em-client-detail-sheet .em-client-stats-final{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;width:100%!important;margin:0 0 14px!important;box-sizing:border-box!important}
-        .em-client-detail-sheet .em-client-stats-final-card{min-width:0!important;width:100%!important;box-sizing:border-box!important;border:1px solid rgba(150,99,85,.10)!important;border-radius:18px!important;background:#fff!important;padding:14px 12px!important;min-height:104px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;overflow:hidden!important;box-shadow:0 8px 22px rgba(81,54,47,.035)!important}
-        .em-client-detail-sheet .em-client-stats-final-label{font-size:10px!important;line-height:1.25!important;font-weight:800!important;color:#78635c!important;margin:0 0 8px!important;white-space:normal!important}
-        .em-client-detail-sheet .em-client-stats-final-value{font-size:22px!important;line-height:1!important;font-weight:850!important;letter-spacing:-.035em!important;color:#2e2421!important;white-space:normal!important;overflow-wrap:anywhere!important}
-        .em-client-detail-sheet .em-client-stats-final-sub{font-size:8px!important;line-height:1.35!important;color:#9b8881!important;margin-top:7px!important;white-space:normal!important}
-        .em-client-detail-sheet [data-em-original-stat="true"]{display:none!important}
+        html.em-client-detail-open #emMobileDock{display:none!important}
+        .em-client-detail-sheet{box-sizing:border-box!important;max-width:100%!important;overflow-x:hidden!important}
+        .em-client-stats-v5{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;width:100%!important;max-width:100%!important;margin:0 0 16px!important;box-sizing:border-box!important}
+        .em-client-stat-v5{min-width:0!important;width:100%!important;box-sizing:border-box!important;border:1px solid rgba(150,99,85,.11)!important;border-radius:18px!important;background:#fff!important;padding:14px 13px!important;min-height:108px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;overflow:hidden!important;box-shadow:0 8px 22px rgba(81,54,47,.035)!important}
+        .em-client-stat-v5-label{font-size:10px!important;line-height:1.2!important;font-weight:800!important;color:#78635c!important;margin-bottom:8px!important;white-space:normal!important}
+        .em-client-stat-v5-value{font-size:21px!important;line-height:1!important;font-weight:850!important;letter-spacing:-.035em!important;color:#2e2421!important;max-width:100%!important;white-space:normal!important;overflow-wrap:anywhere!important}
+        .em-client-stat-v5-sub{font-size:8px!important;line-height:1.3!important;color:#9b8881!important;margin-top:7px!important;white-space:normal!important}
+        [data-em-client-original-summary="true"]{display:none!important}
       }
     `;
     document.head.appendChild(style);
@@ -66,155 +69,138 @@
     });
   }
 
-  const statDefs=[
+  const defs=[
     {key:'status',label:'Status',kind:'status',sub:'Relacionamento com a cliente'},
     {key:'total comprado',label:'Total comprado',kind:'money',sub:'Histórico de compras'},
     {key:'ja recebido',label:'Já recebido',kind:'money',sub:'Pagamentos confirmados'},
     {key:'saldo em aberto',label:'Saldo em aberto',kind:'money',sub:'A receber'}
   ];
-  const statKeys=statDefs.map(x=>x.key);
+  const keys=defs.map(d=>d.key);
+  const keyCount=(el)=>{const s=norm(txt(el));return keys.filter(k=>s.includes(k)).length;};
 
-  function statCount(el){
-    const s=norm(txt(el));
-    return statKeys.filter(k=>s.includes(k)).length;
-  }
-
-  function findLabelNode(modal,key){
-    const candidates=[...modal.querySelectorAll('small,span,p,b,strong,div')].filter(el=>{
-      const s=norm(txt(el));
-      return (s===key||s.startsWith(key+' '))&&s.length<80;
-    });
-    return candidates.sort((a,b)=>a.children.length-b.children.length)[0]||null;
-  }
-
-  function findOriginalCard(modal,key){
-    const leaf=findLabelNode(modal,key);
-    if(!leaf) return null;
-    let cur=leaf;
-    let best=leaf.parentElement||leaf;
-    for(let i=0;i<7&&cur?.parentElement&&cur.parentElement!==modal;i++){
-      const parent=cur.parentElement;
-      const count=statCount(parent);
-      if(count>=2) break;
-      best=parent;
-      cur=parent;
-    }
-    return best;
-  }
-
-  function extractStat(modal,def){
-    const card=findOriginalCard(modal,def.key);
-    if(!card) return null;
-    const raw=txt(card);
-    let value='—';
-    if(def.kind==='money'){
-      const m=raw.match(/R\$\s*[\d.]+(?:,\d{2})?/i);
-      if(m) value=m[0].replace(/\s+/g,' ');
-    }else{
-      const n=norm(raw);
-      if(n.includes('inativo')) value='Inativo';
-      else if(n.includes('ativo')) value='Ativo';
-      else {
-        const cleaned=raw.replace(/status/i,'').trim();
-        value=cleaned.split(/\s{2,}|\n/)[0]||'Ativo';
+  function findDetailRoot(){
+    const headings=[...document.querySelectorAll('h1,h2,h3,h4,strong,div,span')].filter(el=>visible(el)&&norm(txt(el))==='compras');
+    for(const heading of headings){
+      let cur=heading.parentElement;
+      for(let i=0;i<10&&cur&&cur!==document.body&&cur!==document.documentElement;i++,cur=cur.parentElement){
+        const s=norm(txt(cur));
+        if(s.includes('whatsapp')&&s.includes('compras')&&keys.filter(k=>s.includes(k)).length>=2) return cur;
       }
     }
-    return {card,value};
+    return null;
   }
 
-  function buildFinalStats(modal){
-    ensureFinalStyle();
-    if(modal.querySelector('.em-client-stats-final')) return true;
-    const extracted=statDefs.map(def=>({def,data:extractStat(modal,def)}));
-    if(extracted.some(x=>!x.data)) return false;
+  function findLabel(scope,key){
+    return [...scope.querySelectorAll('small,span,p,b,strong,div')]
+      .filter(el=>!el.closest('.em-client-stats-v5'))
+      .filter(el=>{const s=norm(txt(el));return (s===key||s.startsWith(key+' '))&&s.length<100;})
+      .sort((a,b)=>a.children.length-b.children.length)[0]||null;
+  }
 
-    const body=modal.querySelector('.modal-body')||modal;
+  function commonAncestor(nodes,limit){
+    let cur=nodes[0]?.parentElement||null;
+    while(cur&&cur!==limit&&cur!==document.body){
+      if(nodes.every(n=>cur.contains(n))) return cur;
+      cur=cur.parentElement;
+    }
+    return null;
+  }
+
+  function directChildContaining(parent,node){
+    let cur=node;
+    while(cur?.parentElement&&cur.parentElement!==parent) cur=cur.parentElement;
+    return cur?.parentElement===parent?cur:null;
+  }
+
+  function valueFromCard(card,def){
+    const raw=txt(card);
+    if(def.kind==='money'){
+      const m=raw.match(/R\$\s*[\d.]+(?:,\d{2})?/i);
+      return m?m[0].replace(/\s+/g,' '):'R$ 0,00';
+    }
+    const n=norm(raw);
+    if(n.includes('inativo')) return 'Inativo';
+    if(n.includes('ativo')) return 'Ativo';
+    return 'Ativo';
+  }
+
+  function rebuildSummary(detail){
+    ensureDetailStyle();
+    if(detail.querySelector('.em-client-stats-v5')) return true;
+    const labels=defs.map(d=>findLabel(detail,d.key));
+    if(labels.some(x=>!x)) return false;
+
+    let summary=commonAncestor(labels,detail);
+    if(!summary||summary===detail) return false;
+    while(summary.parentElement&&summary.parentElement!==detail&&keyCount(summary.parentElement)===4&&norm(txt(summary.parentElement)).includes('whatsapp')===false){
+      const p=summary.parentElement;
+      if(p.children.length>6) break;
+      summary=p;
+    }
+
+    const cards=labels.map(label=>directChildContaining(summary,label));
+    if(cards.some(x=>!x)||new Set(cards).size<4) return false;
+
+    const values=cards.map((card,i)=>valueFromCard(card,defs[i]));
     const grid=document.createElement('section');
-    grid.className='em-client-stats-final';
+    grid.className='em-client-stats-v5';
     grid.setAttribute('aria-label','Resumo da cliente');
-
-    extracted.forEach(({def,data})=>{
-      data.card.dataset.emOriginalStat='true';
-      const card=document.createElement('div');
-      card.className='em-client-stats-final-card';
-      const label=document.createElement('div');
-      label.className='em-client-stats-final-label';
-      label.textContent=def.label;
-      const value=document.createElement('div');
-      value.className='em-client-stats-final-value';
-      value.textContent=data.value;
-      const sub=document.createElement('div');
-      sub.className='em-client-stats-final-sub';
-      sub.textContent=def.sub;
-      card.append(label,value,sub);
-      grid.appendChild(card);
+    defs.forEach((def,i)=>{
+      const card=document.createElement('div');card.className='em-client-stat-v5';
+      const label=document.createElement('div');label.className='em-client-stat-v5-label';label.textContent=def.label;
+      const value=document.createElement('div');value.className='em-client-stat-v5-value';value.textContent=values[i];
+      const sub=document.createElement('div');sub.className='em-client-stat-v5-sub';sub.textContent=def.sub;
+      card.append(label,value,sub);grid.appendChild(card);
     });
-
-    const info=[...body.querySelectorAll('.card,.status-box,div')].find(el=>{
-      const s=norm(txt(el));
-      return s.includes('whatsapp')&&s.includes('cidade')&&s.includes('origem');
-    });
-    if(info&&info.parentElement===body) body.insertBefore(grid,info);
-    else body.prepend(grid);
+    summary.dataset.emClientOriginalSummary='true';
+    summary.parentElement.insertBefore(grid,summary);
     return true;
   }
 
   function decorateDetails(){
-    let detailOpen=false;
-    document.querySelectorAll('.modal').forEach(modal=>{
-      const t=norm(txt(modal));
-      const isDetail=t.includes('compras')&&t.includes('whatsapp')&&statKeys.filter(k=>t.includes(k)).length>=2;
-      modal.classList.toggle('em-client-detail-sheet',isDetail);
-      if(!isDetail) return;
-      detailOpen=true;
-      buildFinalStats(modal);
+    const detail=findDetailRoot();
+    const open=!!detail;
+    root.classList.toggle('em-client-detail-open',open);
+    if(!detail) return;
 
-      [...modal.querySelectorAll('.card,.status-box')].forEach(card=>{
-        const s=norm(txt(card));
-        if(s.includes('whatsapp')&&(s.includes('cidade')||s.includes('origem')||s.includes('observacoes'))) card.classList.add('em-client-detail-info');
-      });
-      const purchases=[...modal.querySelectorAll('h1,h2,h3')].find(h=>norm(txt(h))==='compras');
-      if(purchases) purchases.classList.add('em-client-purchases-title');
+    detail.classList.add('em-client-detail-sheet');
+    const shell=detail.closest('.modal')||detail.closest('.modal-back')||detail;
+    shell.classList.add('em-client-detail-sheet');
+    rebuildSummary(detail);
+
+    [...detail.querySelectorAll('.card,.status-box,div')].forEach(card=>{
+      const s=norm(txt(card));
+      if(s.includes('whatsapp')&&s.includes('cidade')&&s.includes('origem')&&s.length<500) card.classList.add('em-client-detail-info');
     });
-    root.classList.toggle('em-client-detail-open',detailOpen);
+    const purchases=[...detail.querySelectorAll('h1,h2,h3,h4,strong,div')].find(h=>norm(txt(h))==='compras');
+    if(purchases) purchases.classList.add('em-client-purchases-title');
   }
 
   function decorate(){
-    const c=content(); if(!c) return;
-    const active=isClients();
-    root.classList.toggle('em-clients-screen',active);
-    c.classList.toggle('em-clients-view',active);
-    if(active){
-      const head=c.querySelector('.page-head');
-      if(head){
-        if(!head.querySelector('.em-clients-status')){
-          const badge=document.createElement('div');
-          badge.className='em-clients-status';
-          badge.textContent='Cadastro organizado';
-          const h1=head.querySelector('h1');
-          if(h1) head.insertBefore(badge,h1); else head.prepend(badge);
+    const c=content();
+    if(c){
+      const active=isClients();
+      root.classList.toggle('em-clients-screen',active);
+      c.classList.toggle('em-clients-view',active);
+      if(active){
+        const head=c.querySelector('.page-head');
+        if(head){
+          if(!head.querySelector('.em-clients-status')){
+            const badge=document.createElement('div');badge.className='em-clients-status';badge.textContent='Cadastro organizado';
+            const h1=head.querySelector('h1');if(h1) head.insertBefore(badge,h1);else head.prepend(badge);
+          }
+          const p=head.querySelector('p');if(p)p.textContent='Encontre clientes rapidamente, acompanhe contatos e mantenha o relacionamento organizado.';
+          const primary=findPrimary(head);if(primary){primary.classList.add('em-clients-primary');if(norm(txt(primary)).includes('cliente'))primary.textContent='+ Novo cliente';}
         }
-        const p=head.querySelector('p');
-        if(p) p.textContent='Encontre clientes rapidamente, acompanhe contatos e mantenha o relacionamento organizado.';
-        const primary=findPrimary(head);
-        if(primary){
-          primary.classList.add('em-clients-primary');
-          if(norm(txt(primary)).includes('cliente')) primary.textContent='+ Novo cliente';
-        }
+        classifyClientRows(c);
       }
-      classifyClientRows(c);
     }
     decorateDetails();
   }
 
-  function refresh(){
-    if(scheduled) return;
-    scheduled=true;
-    requestAnimationFrame(()=>{scheduled=false;decorate();});
-  }
-
+  function refresh(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;decorate();});}
   document.addEventListener('DOMContentLoaded',refresh,{once:true});
-  document.addEventListener('click',()=>setTimeout(refresh,30),true);
+  document.addEventListener('click',()=>setTimeout(refresh,25),true);
   new MutationObserver(refresh).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','data-active-page']});
   window.addEventListener('pageshow',refresh);
   refresh();
