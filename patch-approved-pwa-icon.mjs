@@ -125,6 +125,7 @@ const icon512=encodePng(scaleRgba(approved,512,512));
 const iconMaskable=encodePng(maskable(approved,512));
 const targets=[
   ['public/elegance-move-rose-gold-v9.png',png],
+  ['public/elegance-move-rose-gold-v10.png',png],
   ['public/apple-touch-icon.png',png],
   ['public/pwa-icon.png',icon192],
   ['public/pwa-icon-192.png',icon192],
