@@ -110,7 +110,9 @@
   function refresh(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;decorate();});}
   document.addEventListener('DOMContentLoaded',refresh,{once:true});
   document.addEventListener('click',()=>setTimeout(refresh,25),true);
-  new MutationObserver(refresh).observe(document.documentElement,{childList:true,subtree:true});
+  const observedContent=content();
+  if(observedContent)new MutationObserver(refresh).observe(observedContent,{childList:true,subtree:true});
+  if(document.body)new MutationObserver(refresh).observe(document.body,{attributes:true,attributeFilter:['data-active-page']});
   window.addEventListener('pageshow',refresh);
   window.addEventListener('resize',refresh,{passive:true});
   refresh();
