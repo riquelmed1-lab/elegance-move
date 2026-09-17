@@ -1,10 +1,14 @@
-# Normalização do banco — fase sombra com dual-write seguro
+# Normalização do banco — dual-write seguro e primeiro cutover de leitura
 
 ## Estado atual
 
-O `app_state` continua sendo a **fonte operacional e de leitura** do aplicativo. Nenhuma tela foi migrada ainda para ler diretamente das tabelas normalizadas.
+O `app_state` continua sendo a **fonte operacional de verdade e de escrita** do aplicativo.
 
 Em 17/09/2026 foi concluído o backfill inicial e, após validação de paridade, foi ativado um **dual-write em sombra não bloqueante** no banco.
+
+Após testes reais de cliente, produto/estoque, orçamento e venda, todos com paridade zero, foi iniciado o primeiro cutover de leitura: **Produtos/Estoque agora preferem `public.products` na resposta de `/api/state`**.
+
+Esse cutover é protegido por fallback. A API só usa a coleção normalizada quando quantidade, IDs e todos os campos relevantes do produto coincidem com o snapshot atual do `app_state`. Se a leitura normalizada falhar ou houver qualquer divergência, a resposta continua usando `app_state` sem interromper a operação.
 
 Sempre que a revisão do `app_state` muda, o trigger privado `trg_shadow_sync_app_state_update` tenta sincronizar a representação normalizada. Se essa sincronização falhar, a atualização do `app_state` continua válida: a venda/operação principal não é derrubada por uma falha da camada sombra.
 
@@ -27,21 +31,45 @@ Sempre que a revisão do `app_state` muda, o trigger privado `trg_shadow_sync_ap
 O schema normalizado preserva os campos já usados pelo estado operacional, incluindo:
 
 - custo e imagem de produto;
+- tamanho, cor, categoria, preço e estoque de produto;
 - custo unitário de itens de venda e orçamento;
 - número, validade e valor planejado do orçamento;
 - total gasto e última compra do cliente.
 
 ## Validação
 
-O primeiro backfill foi validado na revisão 51 com todas as diferenças em zero:
+O primeiro backfill foi validado na revisão 51 com todas as diferenças em zero.
 
-- contagem de clientes, produtos, vendas, itens, pagamentos, orçamentos, despesas e entradas;
-- total de vendas e pagamentos;
-- total de despesas e custo das entradas;
-- saldo total de estoque;
-- campos principais de clientes, produtos, vendas e itens.
+Depois da ativação do dual-write, operações reais avançaram o sistema até a revisão 57, mantendo `normalization_health.ok = true` e todas as diferenças monitoradas em zero.
 
-A função privada `private.normalized_shadow_parity()` é o semáforo técnico. `ok = true` significa que o JSON operacional e as tabelas normalizadas estão equivalentes nas métricas monitoradas.
+Foram validados em uso real:
+
+- atualização de cliente;
+- atualização de produto/estoque;
+- criação de orçamento com itens;
+- criação de venda com item, pagamento, baixa de estoque e atualização do cliente.
+
+Antes do primeiro cutover de leitura, os 37 produtos do `app_state` foram comparados com os 37 registros de `public.products`, com **0 divergências campo a campo**.
+
+A função privada `private.normalized_shadow_parity()` continua sendo o semáforo técnico. `ok = true` significa que o JSON operacional e as tabelas normalizadas estão equivalentes nas métricas monitoradas.
+
+## Leitura de Produtos/Estoque
+
+A rota `/api/state` continua lendo `app_state`, pois os demais domínios ainda dependem dele. Para `products`, porém, a API tenta ler `public.products` usando o token autenticado do usuário.
+
+A leitura normalizada só é aceita quando:
+
+1. a consulta REST de `public.products` é bem-sucedida;
+2. a quantidade de produtos é idêntica;
+3. todos os IDs existem nos dois snapshots;
+4. não há IDs duplicados;
+5. código, custo, nome, tamanho, cor, preço, estoque, categoria e imagem são equivalentes.
+
+Quando todas essas condições passam, a resposta usa os objetos de `public.products`, mantendo a mesma ordem que o `app_state` já fornecia ao frontend.
+
+Se qualquer condição falhar, a API usa imediatamente o snapshot de `app_state`. O cabeçalho `X-Elegance-Products-Source` informa `normalized` ou `app_state` para observabilidade técnica.
+
+A sanitização de custo para o perfil vendedor continua aplicada depois da escolha da fonte de leitura, portanto a migração não altera a regra de visibilidade de custo.
 
 ## Sincronização
 
@@ -70,14 +98,13 @@ A API administrativa `/api/audit` também retorna o objeto `normalization` junto
 
 ## Próximas fases
 
-1. observar o dual-write durante operações reais da loja;
-2. confirmar paridade em revisões posteriores à 51;
-3. tratar qualquer divergência antes de alterar leituras;
-4. migrar leituras por domínio, começando por produtos/estoque;
-5. depois migrar clientes;
-6. por último migrar vendas/financeiro;
-7. retirar `app_state` somente quando todas as áreas estiverem cobertas e validadas.
+1. observar a leitura normalizada de Produtos/Estoque durante novas operações reais;
+2. confirmar que o fallback não é acionado em condições normais;
+3. tratar qualquer divergência antes de ampliar o cutover;
+4. migrar Clientes para leitura normalizada com o mesmo padrão seguro;
+5. depois migrar Vendas/Financeiro;
+6. retirar `app_state` somente quando todas as áreas estiverem cobertas e validadas.
 
 ## Regra de segurança
 
-O `app_state` permanece como fonte de verdade durante esta fase. Nenhuma falha da camada normalizada deve impedir venda, atualização de estoque ou operação financeira. O cutover de leitura só pode ocorrer após múltiplas revisões reais com paridade `ok = true`.
+O `app_state` permanece como fonte de verdade e escrita durante esta fase. Nenhuma falha da camada normalizada deve impedir venda, atualização de estoque ou operação financeira. Cada novo domínio só pode abandonar a leitura legada após validação real, paridade estável e fallback operacional.
