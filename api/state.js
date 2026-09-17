@@ -19,6 +19,53 @@ async function readRow(token){
   return row;
 }
 
+const text = value => value == null ? '' : String(value);
+const number = value => Number(value || 0);
+
+function mapNormalizedProduct(product){
+  return {
+    id:text(product.id),
+    code:text(product.code),
+    cost:number(product.cost),
+    name:text(product.name),
+    size:text(product.size),
+    color:text(product.color),
+    price:number(product.price),
+    stock:number(product.stock),
+    category:text(product.category),
+    imageUrl:text(product.image_url)
+  };
+}
+
+function sameProductSnapshot(currentProducts, normalizedProducts){
+  if(!Array.isArray(currentProducts)||!Array.isArray(normalizedProducts)||currentProducts.length!==normalizedProducts.length) return false;
+  const byId=new Map(normalizedProducts.map(product=>[product.id,product]));
+  if(byId.size!==normalizedProducts.length) return false;
+  return currentProducts.every(current=>{
+    const normalized=byId.get(text(current.id));
+    if(!normalized) return false;
+    return text(current.id)===normalized.id
+      && text(current.code)===normalized.code
+      && number(current.cost)===normalized.cost
+      && text(current.name)===normalized.name
+      && text(current.size)===normalized.size
+      && text(current.color)===normalized.color
+      && number(current.price)===normalized.price
+      && number(current.stock)===normalized.stock
+      && text(current.category)===normalized.category
+      && text(current.imageUrl)===normalized.imageUrl;
+  });
+}
+
+async function readNormalizedProducts(token,currentProducts){
+  const result=await sb('/rest/v1/products?select=id,code,name,category,size,color,stock,price,cost,image_url',{token});
+  if(!result.response.ok||!Array.isArray(result.data)) return null;
+  const normalized=result.data.map(mapNormalizedProduct);
+  if(!sameProductSnapshot(currentProducts,normalized)) return null;
+  const byId=new Map(normalized.map(product=>[product.id,product]));
+  return currentProducts.map(product=>byId.get(text(product.id)));
+}
+
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   try{
@@ -28,7 +75,19 @@ export default async function handler(req,res){
     const current=row.state||{};
 
     if(req.method==='GET'){
-      const state=session.user.role==='seller'?sanitizeSellerState(current):current;
+      let readState=current;
+      let productSource='app_state';
+      try{
+        const normalizedProducts=await readNormalizedProducts(session.access,current.products||[]);
+        if(normalizedProducts){
+          readState={...current,products:normalizedProducts};
+          productSource='normalized';
+        }
+      }catch(error){
+        console.warn('normalized product read fallback',error?.message||error);
+      }
+      res.setHeader('X-Elegance-Products-Source',productSource);
+      const state=session.user.role==='seller'?sanitizeSellerState(readState):readState;
       return json(res,200,{...state,revision:Number(row.revision||0),updatedAt:row.updated_at||null});
     }
     if(req.method!=='PUT') return json(res,405,{error:'Method Not Allowed'});
