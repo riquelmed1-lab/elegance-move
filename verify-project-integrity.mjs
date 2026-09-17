@@ -1,10 +1,11 @@
 import { readFile } from 'node:fs/promises';
 
-const [packageText,manifestText,productCss,mobileCss,mobileJs,nativeJs,salesJs,clientsJs,cleanupJs,passwordJs,productImageApi,productImagePatch] = await Promise.all([
+const [packageText,manifestText,productCss,mobileCss,legibilityCss,mobileJs,nativeJs,salesJs,clientsJs,cleanupJs,passwordJs,productImageApi,productImagePatch] = await Promise.all([
   readFile('package.json','utf8'),
   readFile('public/manifest.webmanifest','utf8'),
   readFile('public/product-images.css','utf8'),
   readFile('public/mobile-app.css','utf8'),
+  readFile('public/mobile-legibility.css','utf8'),
   readFile('public/mobile-app.js','utf8'),
   readFile('public/native-app.js','utf8'),
   readFile('public/sales-mobile.js','utf8'),
@@ -45,6 +46,10 @@ for(const marker of ['#emMobileDock','.modal,.modal.wide','.table tbody']){
   if(!mobileCss.includes(marker)) throw new Error(`Base mobile incompleta: ${marker}`);
 }
 
+for(const marker of ['ELEGANCE_MOVE_MOBILE_LEGIBILITY_V1','font-size:9.5px','font-size:10px','body[data-active-page="clientes"] table.table td:before']){
+  if(!legibilityCss.includes(marker)) throw new Error(`Legibilidade mobile incompleta: ${marker}`);
+}
+
 for(const marker of ['products/${safeProductId(productId)}/main.jpg','previousManagedPath','removePath(session,previousPath)']){
   if(!productImageApi.includes(marker)) throw new Error(`Storage de produto não estabilizado: ${marker}`);
 }
@@ -70,6 +75,7 @@ console.log('PROJECT_INTEGRITY_VERIFIED',{
   dependencies:Object.keys(allDeps).length,
   observerCount,
   mobileOverflowGuard:true,
+  mobileLegibility:true,
   pdvShowcase:true,
   stableProductStorage:true
 });
