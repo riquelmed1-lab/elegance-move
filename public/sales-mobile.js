@@ -4,6 +4,7 @@
 /* ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V4 */
 /* ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V5 */
 /* ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V6 */
+/* ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V7 — corrige apenas valores do resumo compacto */
 (() => {
   const root=document.documentElement;
   let scheduled=false;
@@ -88,52 +89,243 @@
 
   const moneyPattern=/R\$\s*[\d.]+,\d{2}/;
   const percentPattern=/\d+(?:[.,]\d+)?\s*%/;
-  const quantityPattern=/\b\d+(?:[.,]\d+)?\b/;
+  const quantityPattern=/-?\d+(?:[.,]\d+)?/;
 
-  function metricLabelMatch(value,kind){
-    const t=norm(value);
-    if(kind==='qty') return /(^|\s)(qtd\.?|quantidade|itens?|unidades?)(\s|:|$)/.test(t);
-    if(kind==='discount') return /(^|\s)desconto(\s|:|$)/.test(t);
-    if(kind==='total') return !t.includes('subtotal')&&/(^|\s)total(\s|:|$)/.test(t);
-    return false;
+  function descriptor(el){
+    if(!el)return '';
+    const attrs=[
+      el.id,
+      typeof el.className==='string'?el.className:'',
+      el.getAttribute?.('name'),
+      el.getAttribute?.('placeholder'),
+      el.getAttribute?.('aria-label'),
+      el.getAttribute?.('data-label'),
+      el.getAttribute?.('title')
+    ].filter(Boolean);
+    let before='',after='';
+    try{
+      const b=getComputedStyle(el,'::before')?.content;
+      const a=getComputedStyle(el,'::after')?.content;
+      if(b&&b!=='none')before=b.replace(/^["']|["']$/g,'');
+      if(a&&a!=='none')after=a.replace(/^["']|["']$/g,'');
+    }catch{}
+    return norm([text(el),...attrs,before,after].join(' '));
   }
 
-  function extractMetricValue(raw,kind){
-    const s=String(raw||'').replace(/\s+/g,' ').trim();
-    if(!s)return '';
-    if(kind==='qty') return s.match(quantityPattern)?.[0]||'';
-    if(kind==='discount') return s.match(moneyPattern)?.[0]||s.match(percentPattern)?.[0]||'';
-    if(kind==='total') return s.match(moneyPattern)?.[0]||'';
+  function rawControlValue(el){
+    if(!el)return '';
+    if(el.matches?.('input,select,textarea')) return String(el.value??'').trim();
+    return String(
+      el.getAttribute?.('aria-valuenow')||
+      el.getAttribute?.('data-qty')||
+      el.getAttribute?.('data-value')||
+      el.getAttribute?.('value')||
+      text(el)||
+      ''
+    ).trim();
+  }
+
+  function numberFrom(raw){
+    const match=String(raw||'').replace(/\./g,'.').match(quantityPattern);
+    if(!match)return NaN;
+    const value=Number(match[0].replace(',','.'));
+    return Number.isFinite(value)?value:NaN;
+  }
+
+  function moneyNumber(raw){
+    const match=String(raw||'').match(moneyPattern);
+    const source=match?.[0]||String(raw||'');
+    const cleaned=source.replace(/[^\d,.-]/g,'');
+    if(!cleaned)return NaN;
+    const value=Number(cleaned.includes(',')?cleaned.replace(/\./g,'').replace(',','.'):cleaned);
+    return Number.isFinite(value)?value:NaN;
+  }
+
+  function moneyBRL(value){
+    const number=Number(value);
+    if(!Number.isFinite(number))return 'R$ 0,00';
+    return 'R$ '+number.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  function compactQuantity(value){
+    const number=Number(value);
+    if(!Number.isFinite(number)||number<0)return '0';
+    return Number.isInteger(number)?String(number):String(Math.round(number*1000)/1000).replace('.',',');
+  }
+
+  function semanticNodes(scope,matcher){
+    if(!scope)return [];
+    return [scope,...scope.querySelectorAll('*')].filter(el=>{
+      try{return matcher(descriptor(el),el);}catch{return false;}
+    });
+  }
+
+  function labeledValue(scope,kind){
+    const matcher=kind==='qty'
+      ? d=>/(^|\s)(qtd\.?|quantidade|itens?|unidades?)(\s|:|$)/.test(d)
+      : kind==='discount'
+        ? d=>/(^|\s)(desconto|discount)(\s|:|$)/.test(d)
+        : d=>!d.includes('subtotal')&&/(^|\s)total(\s|:|$)/.test(d);
+
+    const nodes=semanticNodes(scope,matcher)
+      .filter(el=>!el.closest?.('.em-sale-mobile-checkout'))
+      .sort((a,b)=>descriptor(a).length-descriptor(b).length);
+
+    for(const node of nodes){
+      const own=rawControlValue(node);
+      if(kind==='total'){
+        const money=own.match(moneyPattern)?.[0];if(money)return money;
+      }else if(kind==='discount'){
+        const money=own.match(moneyPattern)?.[0];if(money)return money;
+        const pct=own.match(percentPattern)?.[0];if(pct)return pct;
+      }else{
+        const contextual=own.match(/(?:qtd\.?|quantidade|itens?|unidades?)\s*:?-?\s*(\d+(?:[.,]\d+)?)/i)?.[1];
+        if(contextual)return contextual;
+      }
+
+      const relatives=[
+        node.nextElementSibling,
+        node.previousElementSibling,
+        ...node.querySelectorAll?.('input,select,textarea,[aria-valuenow],[data-value],[data-qty],strong,b,span')||[]
+      ].filter(Boolean);
+      if(node.parentElement) relatives.push(...node.parentElement.children);
+
+      for(const relative of relatives){
+        if(relative.closest?.('.em-sale-mobile-checkout'))continue;
+        const raw=rawControlValue(relative);
+        if(kind==='total'){
+          const money=raw.match(moneyPattern)?.[0];if(money)return money;
+        }else if(kind==='discount'){
+          const money=raw.match(moneyPattern)?.[0];if(money)return money;
+          const pct=raw.match(percentPattern)?.[0];if(pct)return pct;
+        }else{
+          const n=numberFrom(raw);
+          if(Number.isFinite(n)&&n>=0&&n<10000)return compactQuantity(n);
+        }
+      }
+    }
     return '';
   }
 
-  function nativeMetric(summary,kind,fallback){
-    const candidates=[...summary.querySelectorAll('small,label,span,p,div,b,strong')]
-      .filter(el=>{
-        const t=text(el);return t&&t.length<=120&&metricLabelMatch(t,kind);
-      })
-      .sort((a,b)=>text(a).length-text(b).length);
-
-    for(const label of candidates){
-      const own=extractMetricValue(text(label),kind);
-      if(own)return own;
-      const siblings=[label.nextElementSibling,label.previousElementSibling].filter(Boolean);
-      for(const sibling of siblings){
-        const value=extractMetricValue(text(sibling),kind);if(value)return value;
-      }
-      const parent=label.parentElement;
-      if(parent&&text(parent).length<=180){
-        const value=extractMetricValue(text(parent),kind);if(value)return value;
-      }
+  function qtyFromGroup(group){
+    if(!group)return NaN;
+    const controls=[...group.querySelectorAll('input,select,textarea,[aria-valuenow],[data-qty],[data-value]')]
+      .filter(el=>!el.closest('.em-sale-mobile-checkout'));
+    for(const control of controls){
+      const n=numberFrom(rawControlValue(control));
+      if(Number.isFinite(n)&&n>=0&&n<10000)return n;
     }
 
-    const full=text(summary);
-    const contextual=kind==='qty'
-      ? full.match(/(?:qtd\.?|quantidade|itens?|unidades?)\s*:?-?\s*(\d+(?:[.,]\d+)?)/i)?.[1]
-      : kind==='discount'
-        ? full.match(/desconto\s*:?-?\s*(R\$\s*[\d.]+,\d{2}|\d+(?:[.,]\d+)?\s*%)/i)?.[1]
-        : full.match(/(?:^|\s)total\s*:?-?\s*(R\$\s*[\d.]+,\d{2})/i)?.[1];
-    return contextual||fallback;
+    const candidates=[...group.querySelectorAll('span,strong,b,output')]
+      .filter(el=>!el.closest('.em-sale-mobile-checkout'));
+    for(const candidate of candidates){
+      const n=numberFrom(rawControlValue(candidate));
+      if(Number.isFinite(n)&&n>=0&&n<10000)return n;
+    }
+
+    const raw=text(group)
+      .replace(/R\$\s*[\d.]+,\d{2}/g,' ')
+      .replace(/[+＋−–—-]/g,' ');
+    const numbers=raw.match(/\b\d+(?:[.,]\d+)?\b/g)||[];
+    if(numbers.length){
+      const n=Number(numbers[0].replace(',','.'));
+      if(Number.isFinite(n)&&n>=0&&n<10000)return n;
+    }
+    return NaN;
+  }
+
+  function nativeQuantity(summary,modal){
+    const labeled=labeledValue(summary,'qty');
+    if(labeled){
+      const n=numberFrom(labeled);
+      if(Number.isFinite(n)&&n>0)return compactQuantity(n);
+    }
+
+    const scope=modal.querySelector('.pdv')||summary||modal;
+    const rows=[...scope.querySelectorAll('.product-row,.cart-item,.sale-item,.order-item')]
+      .filter(row=>!row.closest('.em-sale-mobile-checkout'))
+      .filter((row,index,all)=>!all.some(other=>other!==row&&other.contains(row)));
+
+    let sum=0,found=false;
+    for(const row of rows){
+      const group=row.querySelector('.qty,.quantity,[data-qty],[class*="qty"],[class*="quant"]');
+      const q=qtyFromGroup(group);
+      if(Number.isFinite(q)){sum+=q;found=true;}
+    }
+    if(found)return compactQuantity(sum);
+
+    const groups=[...scope.querySelectorAll('.qty,.quantity,[data-qty],[class*="qty"],[class*="quant"]')]
+      .filter(el=>!el.closest('.em-sale-mobile-checkout'))
+      .filter((el,index,all)=>!all.some(other=>other!==el&&other.contains(el)));
+    sum=0;found=false;
+    for(const group of groups){
+      const q=qtyFromGroup(group);
+      if(Number.isFinite(q)){sum+=q;found=true;}
+    }
+    if(found)return compactQuantity(sum);
+
+    const productRows=[...scope.querySelectorAll('[data-product-id]')]
+      .filter(el=>!el.closest('.em-sale-mobile-checkout'))
+      .filter((el,index,all)=>!all.some(other=>other!==el&&other.contains(el)));
+    if(productRows.length)return String(productRows.length);
+
+    return labeled||'0';
+  }
+
+  function moneyNearLabel(scope,labelName){
+    const target=norm(labelName);
+    const nodes=semanticNodes(scope,d=>d.includes(target))
+      .filter(el=>!el.closest?.('.em-sale-mobile-checkout'))
+      .sort((a,b)=>descriptor(a).length-descriptor(b).length);
+    for(const node of nodes){
+      const pool=[node,node.nextElementSibling,node.previousElementSibling,node.parentElement].filter(Boolean);
+      for(const item of pool){
+        const match=rawControlValue(item).match(moneyPattern)?.[0]||text(item).match(moneyPattern)?.[0];
+        if(match)return match;
+      }
+    }
+    return '';
+  }
+
+  function discountControl(summary){
+    const controls=[...summary.querySelectorAll('input,select,textarea')]
+      .filter(el=>!el.closest('.em-sale-mobile-checkout'));
+    for(const control of controls){
+      const parent=control.closest('label,.field,.form-field,.input-group,.form-row,.price-grid,div');
+      const d=norm([descriptor(control),descriptor(parent),descriptor(control.previousElementSibling),descriptor(control.nextElementSibling)].join(' '));
+      if(!d.includes('desconto')&&!d.includes('discount'))continue;
+      const raw=String(control.value??'').trim();
+      const n=numberFrom(raw);
+      if(!Number.isFinite(n))continue;
+      const wrapper=parent||control.parentElement;
+      const typeControl=wrapper?.querySelector?.('select');
+      const type=norm(typeControl?.value||typeControl?.selectedOptions?.[0]?.textContent||d);
+      if(type.includes('percent')||type.includes('%'))return compactQuantity(n)+'%';
+      return moneyBRL(Math.max(0,n));
+    }
+    return '';
+  }
+
+  function nativeDiscount(summary){
+    const visibleValue=labeledValue(summary,'discount');
+    if(visibleValue&&visibleValue!=='0'&&visibleValue!=='0%')return visibleValue;
+
+    const subtotalText=moneyNearLabel(summary,'subtotal');
+    const totalText=labeledValue(summary,'total');
+    const subtotal=moneyNumber(subtotalText);
+    const total=moneyNumber(totalText);
+    if(Number.isFinite(subtotal)&&Number.isFinite(total)&&subtotal>=total){
+      return moneyBRL(Math.max(0,subtotal-total));
+    }
+
+    const control=discountControl(summary);
+    if(control)return control;
+
+    return visibleValue||'R$ 0,00';
+  }
+
+  function nativeTotal(summary){
+    return labeledValue(summary,'total')||'R$ 0,00';
   }
 
   function setText(el,value){if(el&&text(el)!==String(value))el.textContent=String(value);}
@@ -163,9 +355,9 @@
       });
     }
 
-    setText(checkout.querySelector('[data-em-sale-qty]'),nativeMetric(summary,'qty','0'));
-    setText(checkout.querySelector('[data-em-sale-discount]'),nativeMetric(summary,'discount','R$ 0,00'));
-    setText(checkout.querySelector('[data-em-sale-total]'),nativeMetric(summary,'total','R$ 0,00'));
+    setText(checkout.querySelector('[data-em-sale-qty]'),nativeQuantity(summary,modal));
+    setText(checkout.querySelector('[data-em-sale-discount]'),nativeDiscount(summary));
+    setText(checkout.querySelector('[data-em-sale-total]'),nativeTotal(summary));
     const proxy=checkout.querySelector('.em-sale-checkout-finish');
     if(proxy){proxy.disabled=!!finalize.disabled;proxy.setAttribute('aria-disabled',String(!!finalize.disabled));}
   }
@@ -191,10 +383,10 @@
 
   function refresh(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;decorate();});}
   document.addEventListener('DOMContentLoaded',refresh,{once:true});
-  document.addEventListener('click',e=>{if(e.target.closest?.('[data-page],#emMobileDock button,[data-em-extra],.em-sale-modal button,.em-sale-modal input,.em-sale-modal select'))setTimeout(refresh,20);},true);
+  document.addEventListener('click',e=>{if(e.target.closest?.('[data-page],#emMobileDock button,[data-em-extra],.em-sale-modal button,.em-sale-modal input,.em-sale-modal select,.em-sale-modal .qty,.em-sale-modal .quantity'))setTimeout(refresh,20);},true);
   document.addEventListener('input',e=>{if(e.target.closest?.('.em-sale-modal'))setTimeout(refresh,0);},true);
   document.addEventListener('change',e=>{if(e.target.closest?.('.em-sale-modal'))setTimeout(refresh,0);},true);
-  if(document.body)new MutationObserver(refresh).observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['data-active-page','disabled']});
+  if(document.body)new MutationObserver(refresh).observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['data-active-page','disabled','value','aria-valuenow','data-qty']});
   window.addEventListener('pageshow',refresh);
   refresh();
 })();
