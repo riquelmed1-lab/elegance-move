@@ -2,6 +2,9 @@
   "name": "elegance-move-cloud",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "build": "node build.mjs && node patch-entry-delete.mjs && node patch-dashboard-entry-sync.mjs && node patch-monthly-profit.mjs && node patch-premium-commercial-doc.mjs && node patch-remove-quote-condition.mjs && node patch-product-images.mjs && node patch-product-camera.mjs && node patch-commercial-product-images.mjs && node patch-cloud-status-copy.mjs && node inject-users-ui.mjs && node inject-password-recovery.mjs && node generate-supabase-config.mjs && node inject-premium-theme.mjs && node inject-mobile-app.mjs && node inject-native-app.mjs && node inject-login-premium.mjs && node inject-sales-mobile.mjs && node inject-clients-mobile.mjs && node patch-approved-pwa-icon.mjs && node patch-pwa.mjs && node verify-premium-build.mjs && node verify-native-app.mjs && node verify-login-premium.mjs && node verify-sales-mobile.mjs && node verify-clients-mobile.mjs && node verify-product-camera.mjs"
   }
