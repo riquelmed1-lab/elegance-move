@@ -1,6 +1,7 @@
 const asNumber=v=>Number(v??0)||0;
 const idOf=value=>String(value??'').trim();
 const CLIENT_EDITABLE_FIELDS=['name','phone','city','birthday','source','notes','status'];
+const money=value=>Math.round(asNumber(value)*100)/100;
 
 function fail(code,extra={}){
   throw Object.assign(new Error(code),{code,...extra});
@@ -64,21 +65,38 @@ function secureLine(line,productMap,unitPriceOverride){
     size:product.size,
     color:product.color,
     category:product.category,
-    unitPrice:unitPriceOverride==null?asNumber(product.price):asNumber(unitPriceOverride),
-    unitCost:asNumber(product.cost),
+    unitPrice:unitPriceOverride==null?money(product.price):money(unitPriceOverride),
+    unitCost:money(product.cost),
     qty
   };
 }
 
+function secureDiscount(doc,subtotal){
+  const base=money(Math.max(0,subtotal));
+  const type=String(doc?.discountType||'').trim().toLowerCase();
+  if(type==='percent'||type==='percentage'){
+    const value=Math.max(0,Math.min(100,asNumber(doc.discountValue)));
+    const amount=money(base*value/100);
+    return {discountType:'percent',discountValue:value,discountAmount:amount};
+  }
+  if(type==='amount'){
+    const requested=Object.prototype.hasOwnProperty.call(doc||{},'discountValue')?asNumber(doc.discountValue):asNumber(doc.discountAmount);
+    const amount=money(Math.max(0,Math.min(base,requested)));
+    return {discountType:amount>0?'amount':'none',discountValue:amount,discountAmount:amount};
+  }
+  const fallback=money(Math.max(0,Math.min(base,asNumber(doc?.discountAmount))));
+  return {discountType:fallback>0?'amount':'none',discountValue:fallback,discountAmount:fallback};
+}
+
 function securePayments(payments,total){
-  let remaining=Math.max(0,asNumber(total));
+  let remaining=money(Math.max(0,asNumber(total)));
   const secured=[];
   for(const payment of Array.isArray(payments)?payments:[]){
     if(remaining<=0) break;
-    const amount=Math.max(0,Math.min(remaining,asNumber(payment?.amount)));
+    const amount=money(Math.max(0,Math.min(remaining,asNumber(payment?.amount))));
     if(amount<=0) continue;
     secured.push({...payment,amount});
-    remaining=Math.max(0,Math.round((remaining-amount)*100)/100);
+    remaining=money(Math.max(0,remaining-amount));
   }
   return secured;
 }
@@ -90,20 +108,20 @@ function secureNewSale(sale,productMap,clientMap){
   if(clientId&&!clientMap.has(clientId)) fail('UNKNOWN_CLIENT');
   const lines=(sale.lines||[]).map(line=>secureLine(line,productMap));
   if(!lines.length) fail('EMPTY_SALE');
-  const subtotal=lines.reduce((sum,line)=>sum+asNumber(line.unitPrice)*line.qty,0);
-  const discountAmount=Math.max(0,Math.min(subtotal,asNumber(sale.discountAmount)));
-  const total=subtotal-discountAmount;
+  const subtotal=money(lines.reduce((sum,line)=>sum+asNumber(line.unitPrice)*line.qty,0));
+  const discount=secureDiscount(sale,subtotal);
+  const total=money(subtotal-discount.discountAmount);
   const client=clientId?clientMap.get(clientId):null;
   const payments=securePayments(sale.payments,total);
   return {
     ...sale,
+    ...discount,
     id,
     clientId:clientId||'',
     client:client?.name||sale.client||'Cliente avulso',
     lines,
     payments,
     subtotal,
-    discountAmount,
     total,
     items:lines.reduce((sum,line)=>sum+line.qty,0)
   };
@@ -115,18 +133,18 @@ function secureQuotes(incoming,productMap,clientMap){
     const clientId=idOf(quote.clientId);
     if(clientId&&!clientMap.has(clientId)) fail('UNKNOWN_CLIENT');
     const lines=(quote.lines||[]).map(line=>secureLine(line,productMap));
-    const subtotal=lines.reduce((sum,line)=>sum+asNumber(line.unitPrice)*line.qty,0);
-    const discountAmount=Math.max(0,Math.min(subtotal,asNumber(quote.discountAmount)));
+    const subtotal=money(lines.reduce((sum,line)=>sum+asNumber(line.unitPrice)*line.qty,0));
+    const discount=secureDiscount(quote,subtotal);
     const client=clientId?clientMap.get(clientId):null;
     return {
       ...quote,
+      ...discount,
       id:idOf(quote.id),
       clientId:clientId||'',
       client:client?.name||quote.client||'Cliente avulso',
       lines,
       subtotal,
-      discountAmount,
-      total:subtotal-discountAmount,
+      total:money(subtotal-discount.discountAmount),
       items:lines.reduce((sum,line)=>sum+line.qty,0)
     };
   });
@@ -138,7 +156,7 @@ function recomputeClientStats(clients,sales){
     const clientId=idOf(sale.clientId);
     if(!clientId) continue;
     const prev=totals.get(clientId)||{total:0,last:''};
-    prev.total+=asNumber(sale.total);
+    prev.total=money(prev.total+asNumber(sale.total));
     if(String(sale.date||'')>prev.last) prev.last=String(sale.date||'');
     totals.set(clientId,prev);
   }
@@ -195,4 +213,4 @@ export function secureSellerWrite(incoming,current){
   };
 }
 
-export const sellerRuleInternals={soldByProduct,recomputeClientStats,nextDocumentCounters,securePayments};
+export const sellerRuleInternals={soldByProduct,recomputeClientStats,nextDocumentCounters,securePayments,secureDiscount};
