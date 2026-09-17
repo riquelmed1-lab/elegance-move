@@ -1,6 +1,7 @@
 /* ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V1 */
 /* ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V2 */
 /* ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V3 */
+/* ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V4 */
 (() => {
   const root=document.documentElement;
   let scheduled=false;
@@ -8,6 +9,7 @@
   const text=(el)=>String(el?.textContent||'').replace(/\s+/g,' ').trim();
   const norm=(value)=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
   const visible=(el)=>!!(el&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'&&el.getClientRects().length);
+  const moneyFmt=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 
   function content(){return document.getElementById('content')||document.querySelector('.content');}
   function loginVisible(){const login=document.getElementById('login');if(!login)return false;const s=getComputedStyle(login);return s.display!=='none'&&s.visibility!=='hidden'&&login.getClientRects().length>0;}
@@ -87,6 +89,17 @@
     return matches?.length?matches[matches.length-1]:'';
   }
 
+  function parseMoney(value){
+    const raw=String(value??'').trim();
+    if(!raw) return NaN;
+    const cleaned=raw.replace(/[^\d,.-]/g,'');
+    if(!cleaned) return NaN;
+    let normalized=cleaned;
+    if(cleaned.includes(',')) normalized=cleaned.replace(/\./g,'').replace(',','.');
+    const number=Number(normalized);
+    return Number.isFinite(number)?number:NaN;
+  }
+
   function labeledMoney(rootNode,label){
     const candidates=[...rootNode.querySelectorAll('div,p,span,label,small,b,strong')].filter(el=>{
       const t=norm(text(el));
@@ -102,40 +115,110 @@
     return '';
   }
 
+  function fieldDescriptor(field){
+    const parts=[field.name,field.id,field.placeholder,field.getAttribute('aria-label'),field.getAttribute('title')].filter(Boolean);
+    const wrapper=field.closest('label,.field,.form-field,.input-group,.form-row');
+    if(wrapper&&text(wrapper).length<140) parts.push(text(wrapper));
+    else if(field.parentElement&&text(field.parentElement).length<100) parts.push(text(field.parentElement));
+    return norm(parts.join(' '));
+  }
+
+  function numericControlValue(el){
+    if(!el) return NaN;
+    const raw=el.matches?.('input,select,textarea')?el.value:(el.getAttribute?.('aria-valuenow')||el.dataset?.qty||el.dataset?.value||text(el));
+    const match=String(raw??'').replace(',','.').match(/-?\d+(?:\.\d+)?/);
+    const number=match?Number(match[0]):NaN;
+    return Number.isFinite(number)?number:NaN;
+  }
+
   function saleQuantity(modal){
     const order=modal.querySelector('.order')||modal;
-    const qtyNodes=[...order.querySelectorAll('.qty')];
+    const controls=[...order.querySelectorAll('input,select,textarea')].filter(el=>{
+      const d=fieldDescriptor(el);
+      return d.includes('qty')||d.includes('qtd')||d.includes('quantidade');
+    });
     let sum=0,found=false;
+    for(const control of controls){
+      const value=numericControlValue(control);
+      if(Number.isFinite(value)&&value>=0){sum+=value;found=true;}
+    }
+    if(found) return Math.round(sum*1000)/1000;
+
+    const qtyNodes=[...new Set([...order.querySelectorAll('.qty,.quantity,[data-qty],[class*="qty"],[class*="quant"]')])]
+      .filter(el=>!el.closest('.em-sale-mobile-checkout'));
     for(const node of qtyNodes){
-      const input=node.querySelector('input');
-      let value=input?Number(input.value):NaN;
+      const input=node.matches('input,select,textarea')?node:node.querySelector('input,select,textarea');
+      let value=numericControlValue(input||node);
       if(!Number.isFinite(value)){
-        const match=text(node).match(/\b\d+\b/);
-        value=match?Number(match[0]):NaN;
+        const numbers=text(node).match(/\b\d+(?:[.,]\d+)?\b/g)||[];
+        if(numbers.length) value=Number(numbers[numbers.length-1].replace(',','.'));
       }
       if(Number.isFinite(value)&&value>=0){sum+=value;found=true;}
     }
-    if(found) return sum;
+    if(found) return Math.round(sum*1000)/1000;
+
+    const rows=[...order.querySelectorAll('.product-row,.cart-item,.sale-item,.order-item,[data-product-id]')]
+      .filter((row,index,all)=>!all.some(other=>other!==row&&other.contains(row)));
+    let rowSum=0,rowFound=false;
+    for(const row of rows){
+      const buttons=[...row.querySelectorAll('button')];
+      const minus=buttons.find(btn=>['-','−'].includes(text(btn)));
+      const plus=buttons.find(btn=>['+','＋'].includes(text(btn)));
+      if(minus&&plus){
+        const parent=plus.parentElement===minus.parentElement?plus.parentElement:row;
+        const candidates=[...parent.querySelectorAll('span,b,strong,input')].filter(el=>el!==minus&&el!==plus);
+        const qty=candidates.map(numericControlValue).find(v=>Number.isFinite(v)&&v>=0);
+        if(Number.isFinite(qty)){rowSum+=qty;rowFound=true;continue;}
+      }
+    }
+    if(rowFound) return Math.round(rowSum*1000)/1000;
+    if(rows.length) return rows.length;
+
     const explicit=[...order.querySelectorAll('div,p,span,small,b,strong')].find(el=>{
       const t=norm(text(el));return (t.startsWith('quantidade')||t.startsWith('qtd'))&&t.length<60;
     });
-    const match=text(explicit).match(/\b\d+\b/);
-    return match?Number(match[0]):0;
-  }
-
-  function saleDiscount(modal){
-    const order=modal.querySelector('.order')||modal;
-    const money=labeledMoney(order,'desconto');
-    if(money) return money;
-    const candidate=[...order.querySelectorAll('div,p,span,label,small,b,strong')].find(el=>norm(text(el)).includes('desconto')&&text(el).length<80);
-    const percent=text(candidate).match(/\d+(?:[.,]\d+)?\s*%/);
-    return percent?percent[0]:'R$ 0,00';
+    const match=text(explicit).match(/\b\d+(?:[.,]\d+)?\b/);
+    return match?Number(match[0].replace(',','.')):0;
   }
 
   function saleTotal(modal){
     const order=modal.querySelector('.order')||modal;
     const direct=order.querySelector('.order-total');
     return moneyFrom(direct)||labeledMoney(order,'total')||'R$ 0,00';
+  }
+
+  function saleDiscount(modal){
+    const order=modal.querySelector('.order')||modal;
+    const subtotalText=labeledMoney(order,'subtotal');
+    const totalText=saleTotal(modal);
+    const subtotal=parseMoney(subtotalText);
+    const total=parseMoney(totalText);
+    if(Number.isFinite(subtotal)&&Number.isFinite(total)&&subtotal>=total){
+      return moneyFmt.format(Math.max(0,subtotal-total));
+    }
+
+    const money=labeledMoney(order,'desconto');
+    if(money) return money;
+
+    const field=[...order.querySelectorAll('input,select,textarea')].find(el=>fieldDescriptor(el).includes('desconto'));
+    if(field){
+      const raw=String(field.value??'').trim();
+      const value=parseMoney(raw);
+      const context=norm([fieldDescriptor(field),text(field.parentElement)].join(' '));
+      if(Number.isFinite(value)){
+        if((context.includes('%')||context.includes('percent'))&&Number.isFinite(subtotal)) return moneyFmt.format(Math.max(0,subtotal*value/100));
+        if(context.includes('%')||context.includes('percent')) return String(value).replace('.',',')+'%';
+        return moneyFmt.format(Math.max(0,value));
+      }
+    }
+
+    const candidate=[...order.querySelectorAll('div,p,span,label,small,b,strong')].find(el=>norm(text(el)).includes('desconto')&&text(el).length<80);
+    const percent=text(candidate).match(/\d+(?:[.,]\d+)?\s*%/);
+    if(percent&&Number.isFinite(subtotal)){
+      const rate=Number(percent[0].replace('%','').replace(',','.').trim());
+      if(Number.isFinite(rate)) return moneyFmt.format(Math.max(0,subtotal*rate/100));
+    }
+    return percent?percent[0]:'R$ 0,00';
   }
 
   function setText(el,value){if(el&&text(el)!==String(value))el.textContent=String(value);}
@@ -204,11 +287,11 @@
   function refresh(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;decorate();});}
   document.addEventListener('DOMContentLoaded',refresh,{once:true});
   document.addEventListener('click',e=>{
-    if(e.target.closest?.('[data-page],#emMobileDock button,[data-em-extra],.qty,.em-sale-modal button')) setTimeout(refresh,20);
+    if(e.target.closest?.('[data-page],#emMobileDock button,[data-em-extra],.qty,.quantity,[class*="qty"],[class*="quant"],.em-sale-modal button')) setTimeout(refresh,20);
   },true);
   document.addEventListener('input',e=>{if(e.target.closest?.('.em-sale-modal'))setTimeout(refresh,0);},true);
   document.addEventListener('change',e=>{if(e.target.closest?.('.em-sale-modal'))setTimeout(refresh,0);},true);
-  if(document.body)new MutationObserver(refresh).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['data-active-page','disabled']});
+  if(document.body)new MutationObserver(refresh).observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['data-active-page','disabled','value','aria-valuenow','data-qty']});
   window.addEventListener('pageshow',refresh);
   refresh();
 })();
