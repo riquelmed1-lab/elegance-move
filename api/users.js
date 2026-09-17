@@ -13,6 +13,11 @@ async function rpc(token,name,body){
   return sb(`/rest/v1/rpc/${name}`,{method:'POST',token,body,headers:{Prefer:'return=representation'}});
 }
 
+async function auditAdmin(token,actorId,action,entityId,payload={}){
+  const result=await sb('/rest/v1/audit_logs',{method:'POST',token,body:{actor_id:actorId,action,entity:'user',entity_id:entityId,payload},headers:{Prefer:'return=minimal'}});
+  if(!result.response.ok) console.error('audit insert failed',action,result.data);
+}
+
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   try{
@@ -34,6 +39,7 @@ export default async function handler(req,res){
       if(!patch.response.ok) return json(res,500,{error:'Could not configure user'});
       const confirmed=await rpc(session.access,'admin_confirm_user',{target_user_id:id});
       if(!confirmed.response.ok) return json(res,500,{error:'Could not activate user'});
+      await auditAdmin(session.access,session.user.id,'user.create',id,{role,active:true});
       return json(res,200,{ok:true,user:{id,name,email,role,active:true},requiresEmailConfirmation:false});
     }
 
@@ -48,6 +54,7 @@ export default async function handler(req,res){
       const update={full_name:String(body.name||target.name).trim()||target.name,email:String(body.email||target.email).trim().toLowerCase()||target.email,role,active,updated_at:new Date().toISOString()};
       const r=await sb(`/rest/v1/profiles?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',token:session.access,body:update,headers:{Prefer:'return=minimal'}});
       if(!r.response.ok) return json(res,500,{error:'Could not update user'});
+      await auditAdmin(session.access,session.user.id,'user.update',id,{roleFrom:target.role,roleTo:role,activeFrom:target.active,activeTo:active,nameChanged:update.full_name!==target.name,emailChanged:update.email!==target.email});
       return json(res,200,{ok:true});
     }
 
@@ -61,6 +68,7 @@ export default async function handler(req,res){
         console.error('password reset rpc failed',reset.data);
         return json(res,500,{error:'Could not reset password'});
       }
+      await auditAdmin(session.access,session.user.id,'user.password_reset',id,{});
       return json(res,200,{ok:true});
     }
 
