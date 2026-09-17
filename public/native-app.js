@@ -57,7 +57,7 @@
   },{once:true});
 
   const observer=new MutationObserver(()=>requestAnimationFrame(ensureAppChrome));
-  observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+  observer.observe(document.body||document.documentElement,{childList:true,subtree:true});
 
   window.matchMedia('(display-mode: standalone)').addEventListener?.('change',()=>{
     markStandalone();
