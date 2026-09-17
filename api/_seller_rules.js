@@ -1,6 +1,6 @@
 const asNumber=v=>Number(v??0)||0;
 const idOf=value=>String(value??'').trim();
-const CLIENT_EDITABLE_FIELDS=['name','phone','city','birthday','source','notes'];
+const CLIENT_EDITABLE_FIELDS=['name','phone','city','birthday','source','notes','status'];
 
 function fail(code,extra={}){
   throw Object.assign(new Error(code),{code,...extra});
@@ -36,6 +36,8 @@ function mergeSellerClients(incoming,current){
     for(const field of CLIENT_EDITABLE_FIELDS){
       if(Object.prototype.hasOwnProperty.call(patch,field)) next[field]=patch[field];
     }
+    next.name=String(next.name||'').trim();
+    if(!next.name) fail('INVALID_CLIENT_NAME');
     return next;
   });
   for(const client of incoming||[]){
@@ -68,6 +70,19 @@ function secureLine(line,productMap,unitPriceOverride){
   };
 }
 
+function securePayments(payments,total){
+  let remaining=Math.max(0,asNumber(total));
+  const secured=[];
+  for(const payment of Array.isArray(payments)?payments:[]){
+    if(remaining<=0) break;
+    const amount=Math.max(0,Math.min(remaining,asNumber(payment?.amount)));
+    if(amount<=0) continue;
+    secured.push({...payment,amount});
+    remaining=Math.max(0,Math.round((remaining-amount)*100)/100);
+  }
+  return secured;
+}
+
 function secureNewSale(sale,productMap,clientMap){
   const id=idOf(sale?.id);
   if(!id) fail('INVALID_SALE_ID');
@@ -79,12 +94,14 @@ function secureNewSale(sale,productMap,clientMap){
   const discountAmount=Math.max(0,Math.min(subtotal,asNumber(sale.discountAmount)));
   const total=subtotal-discountAmount;
   const client=clientId?clientMap.get(clientId):null;
+  const payments=securePayments(sale.payments,total);
   return {
     ...sale,
     id,
     clientId:clientId||'',
     client:client?.name||sale.client||'Cliente avulso',
     lines,
+    payments,
     subtotal,
     discountAmount,
     total,
@@ -178,4 +195,4 @@ export function secureSellerWrite(incoming,current){
   };
 }
 
-export const sellerRuleInternals={soldByProduct,recomputeClientStats,nextDocumentCounters};
+export const sellerRuleInternals={soldByProduct,recomputeClientStats,nextDocumentCounters,securePayments};
