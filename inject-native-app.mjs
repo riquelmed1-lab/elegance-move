@@ -2,10 +2,12 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 const indexPath='public/index.html';
 const css=await readFile('public/native-app.css','utf8');
+const legibility=await readFile('public/mobile-legibility.css','utf8');
 const js=await readFile('public/native-app.js','utf8');
 let html=await readFile(indexPath,'utf8');
 
 if(!css.includes('ELEGANCE_MOVE_NATIVE_APP_V1')) throw new Error('Native app CSS marker missing');
+if(!legibility.includes('ELEGANCE_MOVE_MOBILE_LEGIBILITY_V1')) throw new Error('Mobile legibility CSS marker missing');
 if(!js.includes('ELEGANCE_MOVE_NATIVE_APP_RUNTIME_V1')) throw new Error('Native app JS marker missing');
 
 html=html
@@ -16,7 +18,7 @@ const bodyOpen=html.indexOf('<body');
 if(bodyOpen<0) throw new Error('index.html sem <body>');
 const headClose=html.lastIndexOf('</head>',bodyOpen);
 if(headClose<0) throw new Error('index.html sem </head> real');
-html=html.slice(0,headClose)+`<style id="elegance-native-app">${css}</style>`+html.slice(headClose);
+html=html.slice(0,headClose)+`<style id="elegance-native-app">${css}\n${legibility}</style>`+html.slice(headClose);
 
 const bodyClose=html.lastIndexOf('</body>');
 if(bodyClose<0) throw new Error('index.html sem </body>');
@@ -26,4 +28,4 @@ if((html.match(/id="elegance-native-app"/g)||[]).length!==1) throw new Error('Na
 if((html.match(/id="elegance-native-app-runtime"/g)||[]).length!==1) throw new Error('Native app JS duplicado');
 
 await writeFile(indexPath,html,'utf8');
-console.log('NATIVE_APP_INLINE_OK',{cssBytes:Buffer.byteLength(css),jsBytes:Buffer.byteLength(js)});
+console.log('NATIVE_APP_INLINE_OK',{cssBytes:Buffer.byteLength(css)+Buffer.byteLength(legibility),jsBytes:Buffer.byteLength(js),legibility:true});
