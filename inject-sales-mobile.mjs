@@ -1,11 +1,14 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
 const indexPath='public/index.html';
-const css=await readFile('public/sales-mobile.css','utf8');
+const baseCss=await readFile('public/sales-mobile.css','utf8');
+const nativeSummaryCss=await readFile('public/sales-mobile-native-summary.css','utf8');
+const css=baseCss+'\n'+nativeSummaryCss;
 const js=await readFile('public/sales-mobile.js','utf8');
 let html=await readFile(indexPath,'utf8');
 
-if(!css.includes('ELEGANCE_MOVE_SALES_MOBILE_V1')) throw new Error('Sales mobile CSS marker missing');
+if(!baseCss.includes('ELEGANCE_MOVE_SALES_MOBILE_V1')) throw new Error('Sales mobile CSS marker missing');
+if(!nativeSummaryCss.includes('ELEGANCE_MOVE_SALES_NATIVE_SUMMARY_V1')) throw new Error('Native sale summary CSS marker missing');
 if(!js.includes('ELEGANCE_MOVE_SALES_MOBILE_RUNTIME_V1')) throw new Error('Sales mobile JS marker missing');
 
 html=html
@@ -25,6 +28,7 @@ html=html.slice(0,bodyClose)+`<script id="elegance-sales-mobile-runtime">${safeJ
 
 if((html.match(/id="elegance-sales-mobile"/g)||[]).length!==1) throw new Error('Sales mobile CSS duplicado');
 if((html.match(/id="elegance-sales-mobile-runtime"/g)||[]).length!==1) throw new Error('Sales mobile JS duplicado');
+if(!html.includes('ELEGANCE_MOVE_SALES_NATIVE_SUMMARY_V1')) throw new Error('Resumo nativo mobile nao foi injetado');
 
 await writeFile(indexPath,html,'utf8');
-console.log('SALES_MOBILE_INLINE_OK',{cssBytes:Buffer.byteLength(css),jsBytes:Buffer.byteLength(js)});
+console.log('SALES_MOBILE_INLINE_OK',{cssBytes:Buffer.byteLength(css),jsBytes:Buffer.byteLength(js),nativeSummary:true});
