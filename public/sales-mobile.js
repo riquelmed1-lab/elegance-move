@@ -97,9 +97,7 @@
   function refresh(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;decorate();});}
   document.addEventListener('DOMContentLoaded',refresh,{once:true});
   document.addEventListener('click',e=>{if(e.target.closest?.('[data-page],#emMobileDock button,[data-em-extra]'))setTimeout(refresh,20);},true);
-  const observedContent=content();
-  if(observedContent)new MutationObserver(refresh).observe(observedContent,{childList:true,subtree:true});
-  if(document.body)new MutationObserver(refresh).observe(document.body,{attributes:true,attributeFilter:['data-active-page']});
+  if(document.body)new MutationObserver(refresh).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['data-active-page']});
   window.addEventListener('pageshow',refresh);
   refresh();
 })();
