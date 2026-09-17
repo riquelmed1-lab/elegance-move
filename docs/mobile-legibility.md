@@ -10,4 +10,4 @@ Diretriz aplicada:
 - Metadados do PDV: 10 px para cor, tamanho, estoque e informações auxiliares.
 - Títulos, valores e CTAs permanecem maiores conforme a hierarquia existente.
 
-A camada `mobile-legibility.css` é injetada depois de `mobile-polish.css` para funcionar como contrato final de leitura, sem mudar a identidade visual do projeto.
+A camada `mobile-legibility.css` é injetada junto à última camada mobile (`native-app`) para funcionar como contrato final de leitura tanto no navegador quanto no PWA instalado, sem mudar a identidade visual do projeto.
