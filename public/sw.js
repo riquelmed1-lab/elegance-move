@@ -1,6 +1,6 @@
 // Legacy marker retained for compatibility: elegance-move-pwa-v3
-const CACHE_NAME='elegance-move-pwa-v9';
-const APP_SHELL=['/','/manifest.webmanifest?v=9','/elegance-move-rose-gold-v9.png','/pwa-runtime.js','/auth.js','/password-recovery.js','/users-ui.js'];
+const CACHE_NAME='elegance-move-pwa-v10';
+const APP_SHELL=['/','/manifest.webmanifest?v=10','/elegance-move-rose-gold-v10.png','/pwa-icon-192.png','/pwa-icon-512.png','/pwa-icon-maskable-512.png','/apple-touch-icon.png','/pwa-runtime.js','/auth.js','/password-recovery.js','/users-ui.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)).catch(()=>{}));
