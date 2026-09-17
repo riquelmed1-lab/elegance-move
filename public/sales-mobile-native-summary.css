@@ -1,6 +1,6 @@
 /* ELEGANCE_MOVE_SALES_NATIVE_SUMMARY_V1 */
+/* ELEGANCE_MOVE_SALES_NATIVE_SUMMARY_V2 — resumo nativo apenas como fonte dos valores */
 @media(max-width:760px){
-  /* Usa o resumo ORIGINAL do PDV. Nenhum valor e recalculado por esta camada. */
   body.em-sale-modal-open .modal-back{z-index:260!important;padding:0!important;align-items:flex-end!important}
   body.em-sale-modal-open #emMobileDock,
   body.em-sale-modal-open #emMobileMore{opacity:0!important;visibility:hidden!important;pointer-events:none!important;transform:translateY(120%)!important}
@@ -19,65 +19,29 @@
 
   .em-sale-modal .modal-body{
     max-height:calc(94dvh - 68px)!important;
-    padding-bottom:calc(var(--em-native-sale-summary-h,220px) + 18px + env(safe-area-inset-bottom))!important;
+    padding-bottom:calc(154px + env(safe-area-inset-bottom))!important;
     overflow:auto!important;
     overscroll-behavior:contain!important;
     -webkit-overflow-scrolling:touch!important;
   }
 
-  /* Remove o resumo paralelo criado nas versoes anteriores. */
-  .em-sale-mobile-checkout{display:none!important}
-
-  /* O .order e o resumo nativo da propria venda: quantidade, desconto e total permanecem canônicos. */
+  /* O resumo original permanece no fluxo normal. O rodape compacto apenas espelha seus valores. */
+  .em-sale-mobile-checkout{display:block!important}
   .em-sale-native-summary{
-    position:absolute!important;
-    left:0!important;
-    right:0!important;
-    bottom:0!important;
-    top:auto!important;
-    z-index:32!important;
-    width:100%!important;
+    position:static!important;
+    inset:auto!important;
+    width:auto!important;
     max-width:none!important;
-    max-height:min(44dvh,360px)!important;
-    margin:0!important;
-    padding:12px 12px calc(12px + env(safe-area-inset-bottom))!important;
-    overflow:auto!important;
-    overscroll-behavior:contain!important;
-    border-radius:20px 20px 0 0!important;
-    border:1px solid rgba(145,94,80,.12)!important;
-    border-bottom:0!important;
-    background:rgba(255,253,252,.985)!important;
-    box-shadow:0 -16px 36px rgba(61,40,34,.16)!important;
-    backdrop-filter:blur(22px) saturate(1.16)!important;
-    -webkit-backdrop-filter:blur(22px) saturate(1.16)!important;
+    max-height:none!important;
+    margin:initial!important;
+    padding:initial!important;
+    overflow:visible!important;
+    border-radius:initial!important;
+    border:initial!important;
+    background:initial!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
   }
-
-  .em-sale-native-summary .em-sale-native-finalize{
-    position:sticky!important;
-    bottom:0!important;
-    z-index:4!important;
-    width:100%!important;
-    min-width:100%!important;
-    max-width:100%!important;
-    min-height:50px!important;
-    height:50px!important;
-    margin-top:10px!important;
-    border:0!important;
-    border-radius:14px!important;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    background:linear-gradient(135deg,#9b695b,#75483f)!important;
-    color:#fff!important;
-    box-shadow:0 10px 24px rgba(119,72,61,.19)!important;
-    font-size:12.5px!important;
-    font-weight:850!important;
-    touch-action:manipulation!important;
-  }
-
-  .em-sale-native-summary .em-sale-native-finalize:disabled{opacity:.46!important;box-shadow:none!important}
-}
-
-@media(max-width:390px){
-  .em-sale-native-summary{padding:10px 10px calc(10px + env(safe-area-inset-bottom))!important;max-height:min(46dvh,350px)!important}
+  .em-sale-native-finalize{position:static!important}
 }
