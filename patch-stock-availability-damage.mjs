@@ -9,6 +9,13 @@ if(!html.includes(newFilter)){
   if(!html.includes(oldFilter))throw new Error('Filtro original de estoque não encontrado.');
   html=html.replace(oldFilter,newFilter);
 }
+const oldSku = "metric('SKUs',db.products.length,'Produtos cadastrados')";
+const newSku = "metric('SKUs disponíveis',db.products.filter(p=>Number(p.stock)>0).length,'Produtos com saldo positivo')";
+if(!html.includes(newSku)){
+  if(!html.includes(oldSku))throw new Error('Indicador de SKUs cadastrados não encontrado.');
+  html=html.replace(oldSku,newSku);
+}
+
 const oldLow = "metric('Estoque baixo',db.products.filter(p=>p.stock<=3).length,'Atenção necessária')";
 const newLow = "metric('Estoque baixo',db.products.filter(p=>Number(p.stock)>0&&Number(p.stock)<=3).length,'Saldo entre 1 e 3 peças')";
 if(!html.includes(newLow)){
