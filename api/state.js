@@ -95,7 +95,9 @@ export default async function handler(req,res){
     if(!incoming||!Array.isArray(incoming.clients)||!Array.isArray(incoming.products)||!Array.isArray(incoming.sales)) return json(res,400,{error:'Invalid state'});
     const expected=payload.expectedRevision==null?Number(row.revision||0):Number(payload.expectedRevision);
     if(Number(row.revision||0)!==expected) return json(res,409,{error:'Revision conflict'});
-    const next=session.user.role==='seller'?secureSellerWrite(incoming,current):incoming;
+    const computed=session.user.role==='seller'?secureSellerWrite(incoming,current):incoming;
+    // Histórico de avarias é append-only: atualizações comuns não podem apagar nem reescrever ocorrências já registradas.
+    const next={...computed,damages:Array.isArray(current.damages)?current.damages:[]};
     const nextRevision=expected+1, updatedAt=new Date().toISOString();
     const update=await sb(`/rest/v1/app_state?id=eq.1&revision=eq.${encodeURIComponent(expected)}`,{
       method:'PATCH',token:session.access,body:{state:next,revision:nextRevision,updated_at:updatedAt},headers:{Prefer:'return=representation'}
