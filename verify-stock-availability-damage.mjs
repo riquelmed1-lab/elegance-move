@@ -6,6 +6,7 @@ const api=await readFile('api/damage.js','utf8');
 const state=await readFile('api/state.js','utf8');
 assert.ok(html.includes("Number(p.stock)>0&&(!q||[p.code,p.name,p.category,p.color,p.size]"),'listagem precisa ocultar saldo zero');
 assert.ok(html.includes("Number(p.stock)>0&&Number(p.stock)<=3"),'estoque baixo não deve contar saldo zero');
+assert.ok(html.includes("metric('SKUs disponíveis',db.products.filter(p=>Number(p.stock)>0).length"),'KPI de SKUs deve contar apenas produtos disponíveis');
 assert.ok(html.includes('data-action="new-damage"'),'botão Venda avaria ausente');
 assert.ok(html.includes("fetch('/api/damage'"),'a baixa precisa gravar no backend');
 assert.ok(html.includes('Avarias registradas'),'histórico de avarias ausente');
