@@ -62,8 +62,13 @@ const dbAnchor=html.indexOf('let db=load()');
 if(dbAnchor<0)throw new Error('Escopo principal do aplicativo não encontrado.');
 const appScriptClose=html.indexOf('</script>',dbAnchor);
 if(appScriptClose<0||appScriptClose>bodyClose)throw new Error('Fechamento do script principal não encontrado.');
+// O aplicativo principal é uma IIFE. Inserir antes de </script> coloca o runtime
+// depois de `})();`, fora do escopo de db/modal/toast. Inserimos antes do fechamento
+// da IIFE para que o listener do botão enxergue as funções e variáveis lexicais.
+const appIifeClose=html.lastIndexOf('})();',appScriptClose);
+if(appIifeClose<dbAnchor)throw new Error('Fechamento da IIFE principal não encontrado.');
 const safeRuntime=runtime.replace(/<\/script/gi,'<\\/script');
-html=html.slice(0,appScriptClose)+'\n/* ELEGANCE_MOVE_STOCK_DAMAGE_RUNTIME */\n'+safeRuntime+'\n'+html.slice(appScriptClose);
+html=html.slice(0,appIifeClose)+'\n/* ELEGANCE_MOVE_STOCK_DAMAGE_RUNTIME */\n'+safeRuntime+'\n'+html.slice(appIifeClose);
 
 for(const marker of [
   "stockFilter==='Disponíveis'?Number(p.stock)>0:stockFilter==='Negativos'?Number(p.stock)<0:true",
