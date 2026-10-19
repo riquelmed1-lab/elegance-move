@@ -4,11 +4,14 @@ const file='public/index.html';
 let html=await readFile(file,'utf8');
 
 const oldFilter = "const arr=db.products.filter(p=>(!q||[p.code,p.name,p.category,p.color,p.size].join(' ').toLowerCase().includes(q))&&(stockFilter==='Todos'||(stockFilter==='Baixo'?p.stock<=3:p.stock>3)));";
-const newFilter = "const arr=db.products.filter(p=>Number(p.stock)>0&&(!q||[p.code,p.name,p.category,p.color,p.size].join(' ').toLowerCase().includes(q))&&(stockFilter==='Todos'||(stockFilter==='Baixo'?Number(p.stock)<=3:stockFilter==='Disponível'?Number(p.stock)>0:true)));";
+const newFilter = "const arr=db.products.filter(p=>(stockFilter==='Disponíveis'?Number(p.stock)>0:stockFilter==='Negativos'?Number(p.stock)<0:true)&&(!q||[p.code,p.name,p.category,p.color,p.size].join(' ').toLowerCase().includes(q)));";
 if(!html.includes(newFilter)){
   if(!html.includes(oldFilter))throw new Error('Filtro original de estoque não encontrado.');
   html=html.replace(oldFilter,newFilter);
 }
+const oldOptions = '<select id="stockFilter" class="input" style="max-width:190px"><option>Todos</option><option>Baixo</option><option>Disponível</option></select>';
+const newOptions = '<select id="stockFilter" class="input" style="max-width:190px"><option>Disponíveis</option><option>Todos</option><option>Negativos</option></select>';
+if(!html.includes(newOptions)){if(!html.includes(oldOptions))throw new Error('Opções do filtro de estoque não encontradas.');html=html.replace(oldOptions,newOptions);}
 const oldSku = "metric('SKUs',db.products.length,'Produtos cadastrados')";
 const newSku = "metric('SKUs disponíveis',db.products.filter(p=>Number(p.stock)>0).length,'Produtos com saldo positivo')";
 if(!html.includes(newSku)){
@@ -53,14 +56,20 @@ if(headClose<0)throw new Error('index.html sem fechamento do <head>');
 html=html.slice(0,headClose)+'<style id="em-stock-damage-style">'+css+'</style>'+html.slice(headClose);
 const bodyClose=html.lastIndexOf('</body>');
 if(bodyClose<0)throw new Error('index.html sem fechamento do <body>');
+// O runtime precisa compartilhar o escopo lexical do aplicativo (db, modal, closeModal,
+// toast, cloudRevision e hydrateCloud). Um script separado não enxerga variáveis let/const.
+const dbAnchor=html.indexOf('let db=load()');
+if(dbAnchor<0)throw new Error('Escopo principal do aplicativo não encontrado.');
+const appScriptClose=html.indexOf('</script>',dbAnchor);
+if(appScriptClose<0||appScriptClose>bodyClose)throw new Error('Fechamento do script principal não encontrado.');
 const safeRuntime=runtime.replace(/<\/script/gi,'<\\/script');
-html=html.slice(0,bodyClose)+'<script id="em-stock-damage-runtime">'+safeRuntime+'</script>'+html.slice(bodyClose);
+html=html.slice(0,appScriptClose)+'\n/* ELEGANCE_MOVE_STOCK_DAMAGE_RUNTIME */\n'+safeRuntime+'\n'+html.slice(appScriptClose);
 
 for(const marker of [
-  "Number(p.stock)>0&&(!q||[p.code,p.name,p.category,p.color,p.size]",
+  "stockFilter==='Disponíveis'?Number(p.stock)>0:stockFilter==='Negativos'?Number(p.stock)<0:true",
   "Saldo entre 1 e 3 peças",
   "damages:[]",
-  "id=\"em-stock-damage-runtime\"",
+  "ELEGANCE_MOVE_STOCK_DAMAGE_RUNTIME",
   "data-action=\"new-damage\"",
   "fetch('/api/damage'",
   "Avarias registradas"
